@@ -21,3 +21,20 @@ def find_color_mask(frame):
     mask = cv2.dilate(mask, None, iterations=2)
 
     return mask
+
+
+# Finds the largest "blob" on the screen
+def find_largest_contour(frame):
+    # Finds contours in the provided image
+    cnts, _ = cv2.findContours(frame.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if len(cnts) > 0:
+        c = max(cnts, key=cv2.contourArea)
+        ((x, y), radius) = cv2.minEnclosingCircle(c)
+        M = cv2.moments(c)
+        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+    else:
+        (x, y) = (0, 0)
+        radius = 5
+        center = (0, 0)
+
+    return x, y, radius, center
