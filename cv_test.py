@@ -38,3 +38,29 @@ def find_largest_contour(frame):
         center = (0, 0)
 
     return x, y, radius, center
+
+
+while True:
+    frame = picam2.capture_array()
+
+    if frame is None:
+        print("Error: Frame not captured")
+        break
+
+    mask = find_color_mask(frame)
+
+    x, y, radius, center = find_largest_contour(mask)
+
+    if radius > 10:
+        # draw the circle and centroid on the frame,
+        # then update the list of tracked points
+        cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
+        cv2.circle(frame, center, 5, (255, 0, 0), -1)
+
+    cv2.imshow("Tracking", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord("q"):  # Press q to break the loop and stop moving
+        break
+
+cv2.destroyAllWindows()
+picam2.stop()
