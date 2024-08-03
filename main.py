@@ -216,6 +216,76 @@ while True:
         stop()
         break
 
+while True:
+    frame = picam2.capture_array()
+
+    mask = find_color_mask(frame)
+    x, y, radius, center, area = find_largest_contour(mask)
+
+    if radius > 20:
+        found = True
+        cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
+        cv2.circle(frame, center, 5, (255, 0, 0), -1)
+    else:
+        found = False
+
+    if found:
+        if x < 150:
+            h_direction = "left"
+            if pan_a < 2500:
+                pan_a += 20
+            pwm.set_servo_pulsewidth(pan, pan_a)
+        elif x > 170:
+            h_direction = "right"
+            if pan_a > 500:
+                pan_a -= 20
+            pwm.set_servo_pulsewidth(pan, pan_a)
+
+        if y > 130:
+            v_direction = "up"
+            if tilt_a < 2500:
+                tilt_a += 20
+            pwm.set_servo_pulsewidth(tilt, tilt_a)
+        elif y < 110:
+            v_direction = "down"
+            if tilt_a > 500:
+                tilt_a -= 20
+            pwm.set_servo_pulsewidth(tilt, tilt_a)
+
+    elif v_direction != "none" and h_direction != "none":
+        if h_direction == "left":
+            if pan_a < 2500:
+                pan_a += 20
+            pwm.set_servo_pulsewidth(pan, pan_a)
+        elif h_direction == "right":
+            if pan_a > 500:
+                pan_a -= 20
+            pwm.set_servo_pulsewidth(pan, pan_a)
+
+        if v_direction == "up":
+            if tilt_a < 2500:
+                tilt_a += 20
+            pwm.set_servo_pulsewidth(tilt, tilt_a)
+        elif v_direction == "down":
+            if tilt_a > 500:
+                tilt_a -= 20
+            pwm.set_servo_pulsewidth(tilt, tilt_a)
+
+    cv2.imshow("Feed", frame)  # Shows frame with bounding box
+
+    if cv2.waitKey(1) & 0xFF == ord("q"):  # Press q to break the loop and stop moving
+        break
+
+pwm.set_servo_pulsewidth(pan, 1500)
+pwm.set_servo_pulsewidth(tilt, 1500)
+sleep(1)
+
+# Cleanup
+pwm.set_PWM_dutycycle(pan, 0)
+pwm.set_PWM_dutycycle(tilt, 0)
+
+pwm.set_PWM_frequency(pan, 0)
+pwm.set_PWM_frequency(tilt, 0)
 
 cv2.destroyAllWindows()
 picam2.stop()
