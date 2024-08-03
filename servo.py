@@ -25,6 +25,51 @@ tilt_a = 1500
 v_direction = "none"
 h_direction = "right"
 
+
+def calculate_pwm(x, y, pan_a, tilt_a, h_direction, v_direction):
+    # Assume a 640x480 image and a 54x41 degree FOV
+    image_width = 640
+    image_height = 480
+    fov_width = 54
+    fov_height = 41
+
+    # Convert the angles to PWM signals
+    # Assume a servo with a range of 0 to 180 degrees and a PWM signal of 500 to 2500 microseconds
+    pwm_width = 2000  # 2500 - 500
+    pwm_center = 1500  # (2500 + 500) / 2
+
+    # Deadzone
+    deadzone = 20
+
+    if x < (image_width / 2) - deadzone:
+        h_direction = "left"
+        if pan_a < 2500:
+            pan_a += int(
+                10 * ((image_width / 2) - deadzone - x) / (image_width / 2)
+            )  # Linear scaling for PWM increments
+    elif x > (image_width / 2) + deadzone:
+        h_direction = "right"
+        if pan_a > 500:
+            pan_a -= int(
+                10 * (x - (image_width / 2) - deadzone) / (image_width / 2)
+            )  # Linear scaling for PWM increments
+
+    if y < (image_height / 2) - deadzone:
+        v_direction = "up"
+        if tilt_a < 2500:
+            tilt_a += int(
+                10 * ((image_height / 2) - deadzone - y) / (image_height / 2)
+            )  # Linear scaling for PWM increments
+    elif y > (image_height / 2) + deadzone:
+        v_direction = "down"
+        if tilt_a > 500:
+            tilt_a -= int(
+                10 * (y - (image_height / 2) - deadzone) / (image_height / 2)
+            )  # Linear scaling for PWM increments
+
+    return pan_a, tilt_a, h_direction, v_direction
+
+
 pwm = pigpio.pi()
 
 pwm.set_mode(pan, pigpio.OUTPUT)
