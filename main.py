@@ -31,65 +31,20 @@ print("90 deg")
 pwm.set_servo_pulsewidth(pan, 1500)
 pwm.set_servo_pulsewidth(tilt, 1500)
 
-GPIO.setmode(GPIO.BOARD)
+from gpiozero import DistanceSensor
+from time import sleep
 
 # Setup ultrasonic sensor
-Trigger_C = 22
-Echo_C = 18
-Trigger_L = 31
-Echo_L = 29
-Trigger_R = 33
-Echo_R = 32
+sensor_proximity = 10
+rerouting_proximity = 17.5
 
-GPIO.setup(Trigger_C, GPIO.OUT)  # Trigger 1
-GPIO.setup(Echo_C, GPIO.IN)  # Echo 1
-
-GPIO.setup(Trigger_L, GPIO.OUT)  # Trigger 1
-GPIO.setup(Echo_L, GPIO.IN)  # Echo 1
-
-GPIO.setup(Trigger_R, GPIO.OUT)  # Trigger 1
-GPIO.setup(Echo_R, GPIO.IN)  # Echo 1
-
-GPIO.output(Trigger_C, False)
-GPIO.output(Trigger_L, False)
-GPIO.output(Trigger_R, False)
+sensor_C = DistanceSensor(echo=18, trigger=22)
+sensor_L = DistanceSensor(echo=29, trigger=31)
+sensor_R = DistanceSensor(echo=32, trigger=33)
 
 
-def sonar(GPIO_TRIGGER, GPIO_ECHO):
-    start = 0
-    stop = 0
-    # Set pins as output and input
-    GPIO.setup(GPIO_TRIGGER, GPIO.OUT)  # Trigger
-    GPIO.setup(GPIO_ECHO, GPIO.IN)  # Echo
-
-    # Set trigger to False (Low)
-    GPIO.output(GPIO_TRIGGER, False)
-
-    # Allow module to settle
-    time.sleep(0.01)
-
-    # while distance > 5:
-    # Send 10us pulse to trigger
-    GPIO.output(GPIO_TRIGGER, True)
-    time.sleep(0.00001)
-    GPIO.output(GPIO_TRIGGER, False)
-    begin = time.time()
-    while GPIO.input(GPIO_ECHO) == 0 and time.time() < begin + 0.05:
-        start = time.time()
-
-    while GPIO.input(GPIO_ECHO) == 1 and time.time() < begin + 0.1:
-        stop = time.time()
-
-    # Calculate pulse length
-    elapsed = stop - start
-
-    # Distance pulse traveled in that time is time multiplied by the speed of sound (cm/s)
-    distance = elapsed * 34300
-
-    # That was the distance there and back, so take half of the value
-    distance = distance / 2
-
-    # Reset GPIO settings, return distance (in cm) appropriate for robot movements
+def sonar(sensor):
+    distance = sensor.distance * 100
     return distance
 
 
@@ -229,46 +184,41 @@ while True:
     else:
         found = False
 
+    def linear_scale(value, in_min, in_max, out_min, out_max):
+        return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
     if found:
         if x < 150:
             h_direction = "left"
-            if pan_a < 2500:
-                pan_a += 20
+            pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a - 20)
             pwm.set_servo_pulsewidth(pan, pan_a)
         elif x > 170:
             h_direction = "right"
-            if pan_a > 500:
-                pan_a -= 20
+            pan_a = linear_scale(pan_a, 500, 2500, pan_a - 20, pan_a + 20)
             pwm.set_servo_pulsewidth(pan, pan_a)
 
         if y > 130:
             v_direction = "up"
-            if tilt_a < 2500:
-                tilt_a += 20
+            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a - 20)
             pwm.set_servo_pulsewidth(tilt, tilt_a)
         elif y < 110:
             v_direction = "down"
-            if tilt_a > 500:
-                tilt_a -= 20
+            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a - 20, tilt_a + 20)
             pwm.set_servo_pulsewidth(tilt, tilt_a)
 
     elif v_direction != "none" and h_direction != "none":
         if h_direction == "left":
-            if pan_a < 2500:
-                pan_a += 20
+            pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a - 20)
             pwm.set_servo_pulsewidth(pan, pan_a)
         elif h_direction == "right":
-            if pan_a > 500:
-                pan_a -= 20
+            pan_a = linear_scale(pan_a, 500, 2500, pan_a - 20, pan_a + 20)
             pwm.set_servo_pulsewidth(pan, pan_a)
 
         if v_direction == "up":
-            if tilt_a < 2500:
-                tilt_a += 20
+            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a - 20)
             pwm.set_servo_pulsewidth(tilt, tilt_a)
         elif v_direction == "down":
-            if tilt_a > 500:
-                tilt_a -= 20
+            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a - 20, tilt_a + 20)
             pwm.set_servo_pulsewidth(tilt, tilt_a)
 
     cv2.imshow("Feed", frame)  # Shows frame with bounding box
