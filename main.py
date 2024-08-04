@@ -1,14 +1,12 @@
-# Import motor and camera setup from our files
-from motor import (
-    forward,
-    stop,
-    sharp_left,
-    sharp_right,
-)
-from ball import find_color_mask, find_largest_contour
-from time import sleep
 import RPi.GPIO as GPIO
 import pigpio
+from gpiozero import DistanceSensor
+from picamera2 import Picamera2
+import cv2
+import time
+
+from motor import forward, stop, sharp_left, sharp_right
+from ball import find_color_mask, find_largest_contour
 
 pan = 16
 tilt = 26
@@ -31,10 +29,6 @@ print("90 deg")
 pwm.set_servo_pulsewidth(pan, 1500)
 pwm.set_servo_pulsewidth(tilt, 1500)
 
-from gpiozero import DistanceSensor
-from time import sleep
-
-# Setup ultrasonic sensor
 sensor_proximity = 10
 rerouting_proximity = 17.5
 
@@ -42,40 +36,10 @@ sensor_C = DistanceSensor(echo=18, trigger=22)
 sensor_L = DistanceSensor(echo=29, trigger=31)
 sensor_R = DistanceSensor(echo=32, trigger=33)
 
-
-def sonar(sensor):
-    distance = sensor.distance * 100
-    return distance
-
-
-def no_obstacle(distance_c, distance_l, distance_r):
-    if (
-        distance_c > sensor_proximity
-        and distance_l > sensor_proximity
-        and distance_r > sensor_proximity
-    ):
-        return True
-    else:
-        return False
-
-
-# Setup motors
-
-MOTOR1B = 16  # LEFT motor
-MOTOR1E = 15
-
-MOTOR2B = 11  # RIGHT motor
-MOTOR2E = 13
-
-GPIO.setup(MOTOR1B, GPIO.OUT)
-GPIO.setup(MOTOR1E, GPIO.OUT)
-GPIO.setup(MOTOR2B, GPIO.OUT)
-GPIO.setup(MOTOR2E, GPIO.OUT)
-
-# Setup camera
-from picamera2 import Picamera2
-import cv2
-import time
+GPIO.setup(16, GPIO.OUT)
+GPIO.setup(15, GPIO.OUT)
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(13, GPIO.OUT)
 
 redLower = (150, 140, 1)
 redUpper = (190, 255, 255)
@@ -87,20 +51,7 @@ picam2.configure(
 picam2.start()
 time.sleep(1)
 
-# Ultrasonic Sensor proximity parameter (centimeter)
-sensor_proximity = 10
-rerouting_proximity = 17.5
-
-# Computer vision lower and upper turning range parameters for tracking
-lower_range = 30
-upper_range = 290
-
-found = False
-in_frame = False
-direction = "none"
-
 while True:
-    # Process current frame with our functions
     frame = picam2.capture_array()
 
     if frame is None:
@@ -115,27 +66,24 @@ while True:
     x, y, radius, center, area = find_largest_contour(mask)
 
     print("Area: " + str(area))
-
     print("Coordinates: " + str(x) + ", " + str(y))
 
-    # Distance coming from front ultrasonic sensor
-    distance_C = sonar(Trigger_C, Echo_C)
-    distance_L = sonar(Trigger_L, Echo_L)
-    distance_R = sonar(Trigger_R, Echo_R)
+    distance_C = sensor_C.distance * 100
+    distance_L = sensor_L.distance * 100
+    distance_R = sensor_R.distance * 100
     print("D: " + str(distance_C) + ", " + str(distance_L) + ", " + str(distance_R))
 
     if radius > 40:
-        if not found:
-            found = True
-            print("Found: " + str(found))
+        found = True
         in_frame = True
         cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
         cv2.circle(frame, center, 5, (255, 0, 0), -1)
     else:
+        found = False
         in_frame = False
 
     if not no_obstacle(distance_C, distance_L, distance_R):
-        print("Obstacle detetcted")
+        print("Obstacle detected")
         stop()
         sleep(0.05)
     elif not found:
@@ -165,9 +113,9 @@ while True:
 
     print(direction)
 
-    cv2.imshow("Feed", frame)  # Shows frame with bounding box
+    cv2.imshow("Feed", frame)
 
-    if cv2.waitKey(1) & 0xFF == ord("q"):  # Press q to break the loop and stop moving
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         stop()
         break
 
@@ -233,16 +181,15 @@ while True:
             tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a - 20, tilt_a + 20)
             pwm.set_servo_pulsewidth(tilt, tilt_a)
 
-    cv2.imshow("Feed", frame)  # Shows frame with bounding box
+    cv2.imshow("Feed", frame)
 
-    if cv2.waitKey(1) & 0xFF == ord("q"):  # Press q to break the loop and stop moving
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
 pwm.set_servo_pulsewidth(pan, 1500)
 pwm.set_servo_pulsewidth(tilt, 1500)
 sleep(1)
 
-# Cleanup
 pwm.set_PWM_dutycycle(pan, 0)
 pwm.set_PWM_dutycycle(tilt, 0)
 
