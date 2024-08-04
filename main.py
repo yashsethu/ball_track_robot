@@ -188,22 +188,34 @@ while True:
         return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
     if found:
-        if x < 150:
+        if x < 130:
             h_direction = "left"
-            pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a - 20)
+            if x < 110:
+                pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a - 20)
+            else:
+                pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a)
             pwm.set_servo_pulsewidth(pan, pan_a)
-        elif x > 170:
+        elif x > 190:
             h_direction = "right"
-            pan_a = linear_scale(pan_a, 500, 2500, pan_a - 20, pan_a + 20)
+            if x > 210:
+                pan_a = linear_scale(pan_a, 500, 2500, pan_a - 20, pan_a + 20)
+            else:
+                pan_a = linear_scale(pan_a, 500, 2500, pan_a, pan_a + 20)
             pwm.set_servo_pulsewidth(pan, pan_a)
 
-        if y > 130:
+        if y > 150:
             v_direction = "up"
-            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a - 20)
+            if y > 170:
+                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a - 20)
+            else:
+                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a)
             pwm.set_servo_pulsewidth(tilt, tilt_a)
-        elif y < 110:
+        elif y < 90:
             v_direction = "down"
-            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a - 20, tilt_a + 20)
+            if y < 70:
+                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a - 20, tilt_a + 20)
+            else:
+                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a, tilt_a + 20)
             pwm.set_servo_pulsewidth(tilt, tilt_a)
 
     elif v_direction != "none" and h_direction != "none":
