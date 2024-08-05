@@ -100,8 +100,19 @@ while True:
         roi_gray = gray[y : y + h, x : x + w]
         roi_color = frame[y : y + h, x : x + w]
         resized_roi = cv2.resize(roi_gray, (64, 64))
-        normalized_roi = resized_roi / 255.0
-        prediction = model.predict(tf.expand_dims(normalized_roi, axis=0))
+        # Normalize, add color channel, and expand dimensions for prediction
+        normalized_roi = resized_roi.astype("uint8")
+
+        # Convert grayscale image to RGB
+        normalized_roi = cv2.cvtColor(normalized_roi, cv2.COLOR_GRAY2RGB)
+
+        # Normalize again
+        normalized_roi = normalized_roi / 255.0
+
+        # Add a new axis to match with the input shape the model expects
+        normalized_roi = tf.expand_dims(normalized_roi, axis=0)
+
+        prediction = model.predict(normalized_roi)
         label = "Your Face" if prediction[0][1] > prediction[0][0] else "Unknown"
         cv2.putText(
             frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2
