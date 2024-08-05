@@ -51,71 +51,81 @@ picam2.configure(
 picam2.start()
 time.sleep(1)
 
+
+def linear_scale(value, in_min, in_max, out_min, out_max):
+    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
 while True:
-    frame = picam2.capture_array()
+    try:
+        frame = picam2.capture_array()
 
-    if frame is None:
-        print("Error: Frame not captured")
-        break
+        if frame is None:
+            print("Error: Frame not captured")
+            break
 
-    height, width = frame.shape[:2]
+        height, width = frame.shape[:2]
 
-    print(str(height) + " X " + str(width))
+        print(str(height) + " X " + str(width))
 
-    mask = find_color_mask(frame)
-    x, y, radius, center, area = find_largest_contour(mask)
+        mask = find_color_mask(frame)
+        x, y, radius, center, area = find_largest_contour(mask)
 
-    print("Area: " + str(area))
-    print("Coordinates: " + str(x) + ", " + str(y))
+        print("Area: " + str(area))
+        print("Coordinates: " + str(x) + ", " + str(y))
 
-    distance_C = sensor_C.distance * 100
-    distance_L = sensor_L.distance * 100
-    distance_R = sensor_R.distance * 100
-    print("D: " + str(distance_C) + ", " + str(distance_L) + ", " + str(distance_R))
+        distance_C = sensor_C.distance * 100
+        distance_L = sensor_L.distance * 100
+        distance_R = sensor_R.distance * 100
+        print("D: " + str(distance_C) + ", " + str(distance_L) + ", " + str(distance_R))
 
-    if radius > 40:
-        found = True
-        in_frame = True
-        cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
-        cv2.circle(frame, center, 5, (255, 0, 0), -1)
-    else:
-        found = False
-        in_frame = False
+        if radius > 40:
+            found = True
+            in_frame = True
+            cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
+            cv2.circle(frame, center, 5, (255, 0, 0), -1)
+        else:
+            found = False
+            in_frame = False
 
-    if not no_obstacle(distance_C, distance_L, distance_R):
-        print("Obstacle detected")
-        stop()
-        sleep(0.05)
-    elif not found:
-        sharp_right()
-        sleep(0.075)
-        stop()
-    elif found and in_frame:
-        if x > 260:
-            direction = "right"
+        if not no_obstacle(distance_C, distance_L, distance_R):
+            print("Obstacle detected")
+            stop()
+            sleep(0.05)
+        elif not found:
             sharp_right()
             sleep(0.075)
-        elif x < 60:
-            direction = "left"
-            sharp_left()
+            stop()
+        elif found and in_frame:
+            if x > 260:
+                h_direction = "right"
+                sharp_right()
+                sleep(0.075)
+            elif x < 60:
+                h_direction = "left"
+                sharp_left()
+                sleep(0.075)
+            elif 110 <= x <= 210:
+                forward()
+                sleep(0.2)
+            stop()
+        elif found and not in_frame:
+            if h_direction == "right":
+                sharp_right()
+            elif h_direction == "left":
+                sharp_left()
             sleep(0.075)
-        elif 110 <= x <= 210:
-            forward()
-            sleep(0.2)
-        stop()
-    elif found and not in_frame:
-        if direction == "right":
-            sharp_right()
-        elif direction == "left":
-            sharp_left()
-        sleep(0.075)
-        stop()
+            stop()
 
-    print(direction)
+        print(h_direction)
 
-    cv2.imshow("Feed", frame)
+        cv2.imshow("Feed", frame)
 
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            stop()
+            break
+    except Exception as e:
+        print("Error:", str(e))
         stop()
         break
 
