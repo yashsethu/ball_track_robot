@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import tensorflow as tf
-import numpy as np
 
 # Define the architecture of the model
 model = tf.keras.Sequential(
@@ -20,11 +19,15 @@ model = tf.keras.Sequential(
 )
 
 # Compile the model
-dataset_images = []
-dataset_labels = []
+model.compile(
+    optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+)
 
 # Capture video from webcam
 video_capture = cv2.VideoCapture(0)
+
+dataset_images = []
+dataset_labels = []
 
 image_number = 1
 
@@ -41,7 +44,7 @@ while True:
 
     # Capture user input for label
     label = input(
-        "Enter the label for image {image_number}: (1 for detected face, 0 for no face): "
+        f"Enter the label for image {image_number}: (1 for detected face, 0 for no face): "
     )
 
     # Append the image and label to the dataset
@@ -52,23 +55,19 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-    # Convert the dataset to numpy arrays
-    dataset_images = np.array(dataset_images)
-    dataset_labels = np.array(dataset_labels)
+# Convert the dataset to numpy arrays
+dataset_images = np.array(dataset_images)
+dataset_labels = np.array(dataset_labels)
 
-    # Save the dataset to file
-    np.savez("dataset.npz", images=dataset_images, labels=dataset_labels)
+# Save the dataset to file
+np.savez("dataset.npz", images=dataset_images, labels=dataset_labels)
 
-    # Release the video capture and close the windows
-    video_capture.release()
-    cv2.destroyAllWindows()
+# Release the video capture and close the windows
+video_capture.release()
+cv2.destroyAllWindows()
 
-model.fit(
-    dataset_images,
-    dataset_labels,
-    epochs=10,
-    validation_data=(dataset_images, dataset_labels),
-)
+# Train the model
+model.fit(dataset_images, dataset_labels, epochs=10, validation_split=0.2)
 
 # Capture video from webcam
 video_capture = cv2.VideoCapture(0)
