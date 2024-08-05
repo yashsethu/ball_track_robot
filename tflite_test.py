@@ -14,13 +14,15 @@ model = tf.keras.Sequential(
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(128, activation="relu"),
         tf.keras.layers.Dense(64, activation="relu"),
-        tf.keras.layers.Dense(10, activation="softmax"),
+        tf.keras.layers.Dense(2, activation="softmax"),  # Change this to 2
     ]
 )
 
 # Compile the model
 model.compile(
-    optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+    optimizer="adam",
+    loss="binary_crossentropy",
+    metrics=["accuracy"],  # Change loss to binary_crossentropy
 )
 
 # Train the model
@@ -28,14 +30,13 @@ model.fit(
     train_images, train_labels, epochs=10, validation_data=(test_images, test_labels)
 )
 
-# Capture video from picamera2
+# Capture video from webcam
 video_capture = cv2.VideoCapture(0)
 
 while True:
     # Read each frame from the video feed
     ret, frame = video_capture.read()
 
-    # Perform face structure recognition using the trained model
     # Preprocess the frame
     frame = cv2.resize(frame, (64, 64))
     frame = frame.reshape(1, 64, 64, 3)
@@ -45,15 +46,10 @@ while True:
     predictions = model.predict(frame)
     predicted_class = np.argmax(predictions)
 
-    print("Predicted class:", predicted_class)
+    if predicted_class == 1:  # Assuming that your face is class 1
+        print("Your face is detected!")
+    else:
+        print("Your face is not detected.")
 
-    # Display the frame with face structure recognition
-    cv2.imshow("Face Structure Recognition", frame)
-
-    # Break the loop if 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-
-# Release the video capture and close all windows
-video_capture.release()
-cv2.destroyAllWindows()
+    # Display the frame
+    cv2.imshow("Face Detection", frame)
