@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
 import tensorflow as tf
-import cv2
-import numpy as np
-import cv2
 import numpy as np
 
 # Define the architecture of the model
@@ -26,30 +23,34 @@ model = tf.keras.Sequential(
 dataset_images = []
 dataset_labels = []
 
-    # Capture video from webcam
-    video_capture = cv2.VideoCapture(0)
+# Capture video from webcam
+video_capture = cv2.VideoCapture(0)
 
-    while True:
-        # Read each frame from the video feed
-        ret, frame = video_capture.read()
+image_number = 1
 
-        # Preprocess the frame
-        frame = cv2.resize(frame, (64, 64))
-        frame = frame / 255.0
+while True:
+    # Read each frame from the video feed
+    ret, frame = video_capture.read()
 
-        # Display the frame
-        cv2.imshow("Dataset Capture", frame)
+    # Preprocess the frame
+    frame = cv2.resize(frame, (64, 64))
+    frame = frame / 255.0
 
-        # Capture user input for label
-        label = input("Enter the label for this image (1 for detected face, 0 for no face): ")
+    # Display the frame
+    cv2.imshow("Dataset Capture", frame)
 
-        # Append the image and label to the dataset
-        dataset_images.append(frame)
-        dataset_labels.append(int(label))
+    # Capture user input for label
+    label = input(
+        "Enter the label for image {image_number}: (1 for detected face, 0 for no face): "
+    )
 
-        # Break the loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    # Append the image and label to the dataset
+    dataset_images.append(frame)
+    dataset_labels.append(int(label))
+
+    # Break the loop if 'q' is pressed
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
 
     # Convert the dataset to numpy arrays
     dataset_images = np.array(dataset_images)
@@ -63,7 +64,10 @@ dataset_labels = []
     cv2.destroyAllWindows()
 
 model.fit(
-    train_images, train_labels, epochs=10, validation_data=(test_images, test_labels)
+    dataset_images,
+    dataset_labels,
+    epochs=10,
+    validation_data=(dataset_images, dataset_labels),
 )
 
 # Capture video from webcam
