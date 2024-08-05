@@ -1,3 +1,6 @@
+from keras.preprocessing import image
+import os
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 import cv2
@@ -48,6 +51,37 @@ model = tf.keras.Sequential(
 model.compile(
     optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
 )
+
+# Compile the model
+model.compile(
+    optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+)
+
+
+def load_face_images():
+    image_dir = "face_images"
+
+    # Create the directory if it doesn't exist
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+
+    image_files = os.listdir(image_dir)
+    images = []
+    labels = []
+
+    for image_file in image_files:
+        img = image.load_img(os.path.join(image_dir, image_file), target_size=(64, 64))
+        img_array = image.img_to_array(img)
+        img_array = np.expand_dims(
+            img_array, axis=0
+        )  # Ensure the image has shape (1, 64, 64, 3)
+        images.append(img_array)
+        labels.append(1)  # Assuming all images are of faces
+
+    return np.vstack(images), np.array(
+        labels
+    )  # vstack to get shape (num_images, 64, 64, 3)
+
 
 # Train the model
 train_images, train_labels = load_face_images()  # Load the collected face images
