@@ -5,35 +5,26 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import cv2
 
+# Define the Face Detection Model architecture
+face_detection_model = tf.keras.Sequential(
+    [
+        layers.Conv2D(32, (3, 3), activation="relu", input_shape=(64, 64, 3)),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation="relu"),
+        layers.MaxPooling2D((2, 2)),
+        layers.Flatten(),
+        layers.Dense(64, activation="relu"),
+        layers.Dense(2, activation="softmax"),  # Binary classification: face or no face
+    ]
+)
 
-# Function to collect face images for training
-def collect_face_images():
-    face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-    cap = cv2.VideoCapture(0)
-    count = 0
+# Compile the Face Detection Model
+face_detection_model.compile(
+    optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+)
 
-    while True:
-        ret, frame = cap.read()
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-        for x, y, w, h in faces:
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            roi_gray = gray[y : y + h, x : x + w]
-            roi_color = frame[y : y + h, x : x + w]
-            cv2.imwrite(f"face_images/face_{count}.jpg", roi_gray)
-            count += 1
-
-        cv2.imshow("Face Collector", frame)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-
-# Define the model architecture
-model = tf.keras.Sequential(
+# Define the Face Recognition Model architecture
+face_recognition_model = tf.keras.Sequential(
     [
         layers.Conv2D(32, (3, 3), activation="relu", input_shape=(64, 64, 3)),
         layers.MaxPooling2D((2, 2)),
@@ -43,17 +34,12 @@ model = tf.keras.Sequential(
         layers.Dense(64, activation="relu"),
         layers.Dense(
             2, activation="softmax"
-        ),  # Change the number of classes accordingly
+        ),  # Binary classification: your face or other face
     ]
 )
 
-# Compile the model
-model.compile(
-    optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
-)
-
-# Compile the model
-model.compile(
+# Compile the Face Recognition Model
+face_recognition_model.compile(
     optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
 )
 
