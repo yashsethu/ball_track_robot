@@ -1,15 +1,44 @@
-from PIL import Image
 import cv2
 import numpy as np
 from pycoral.adapters import classify
 from pycoral.utils.edgetpu import make_interpreter
+from tflite_runtime.interpreter import Interpreter
 
+# Import the required libraries
 # Load the model
-interpreter = make_interpreter("mobilenet_v1_1.0_224_quant.tflite")
+model_path = "path/to/your/model.tflite"
+interpreter = Interpreter(model_path)
+
+# Allocate tensors
 interpreter.allocate_tensors()
+
+# Get input and output details
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+# Get input and output shapes
+input_shape = input_details[0]["shape"]
+output_shape = output_details[0]["shape"]
+
+# Perform inference
+input_data = ...  # Provide input data for inference
+interpreter.set_tensor(input_details[0]["index"], input_data)
+interpreter.invoke()
+output_data = interpreter.get_tensor(output_details[0]["index"])
+
+# Release resources
+interpreter.close()
 
 # Open the webcam
 cap = cv2.VideoCapture(0)
+
+# Set the desired resolution and size
+width = 320
+height = 240
+
+# Set the capture properties
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
 while True:
     # Capture frame-by-frame
@@ -17,8 +46,8 @@ while True:
 
     # Preprocess the frame
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    image = Image.fromarray(frame_rgb).resize((224, 224), Image.ANTIALIAS)
-    input_tensor = np.asarray(image).reshape((1, 224, 224, 3))
+    input_tensor = cv2.resize(frame_rgb, (224, 224))
+    input_tensor = np.expand_dims(input_tensor, axis=0)
 
     # Run the model
     interpreter.set_tensor(interpreter.get_input_details()[0]["index"], input_tensor)
