@@ -77,21 +77,79 @@ def display_inference(frame, label):
     cv2.imshow("Live Inference", frame)
 
 
+def create_and_compile_models(input_shape, num_classes):
+    face_detection_model = create_model(input_shape, num_classes)
+    face_detection_model = compile_model(face_detection_model)
+
+    face_recognition_model = create_model(input_shape, num_classes)
+    face_recognition_model = compile_model(face_recognition_model)
+
+    return face_detection_model, face_recognition_model
+
+
+def train_face_detection_model(
+    face_detection_model,
+    face_images,
+    no_face_images,
+    face_labels,
+    no_face_labels,
+    epochs,
+):
+    train_model(
+        face_detection_model,
+        np.concatenate((face_images, no_face_images)),
+        np.concatenate((face_labels, no_face_labels)),
+        epochs,
+    )
+
+
+def train_face_recognition_model(
+    face_recognition_model,
+    your_face_images,
+    other_face_images,
+    your_face_labels,
+    other_face_labels,
+    epochs,
+):
+    train_model(
+        face_recognition_model,
+        np.concatenate((your_face_images, other_face_images)),
+        np.concatenate((your_face_labels, other_face_labels)),
+        epochs,
+    )
+
+
+def capture_and_process_frames(cap, face_detection_model, face_recognition_model):
+    while True:
+        ret, original_frame = cap.read()
+
+        if not ret:
+            print("Failed to capture frame")
+            break
+
+        frame = preprocess_frame(original_frame, (64, 64))
+        face_label = perform_inference(frame, face_detection_model)
+
+        if face_label == 1:
+            frame = preprocess_frame(original_frame, (64, 64))
+            your_face_label = perform_inference(frame, face_recognition_model)
+            display_inference(original_frame, your_face_label)
+
+        cv2.imshow("Live Inference", original_frame)
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+
 def main():
-    # Define model parameters
     input_shape = (64, 64, 3)
     num_classes = 2
     epochs = 10
 
-    # Create face detection model
-    face_detection_model = create_model(input_shape, num_classes)
-    face_detection_model = compile_model(face_detection_model)
+    face_detection_model, face_recognition_model = create_and_compile_models(
+        input_shape, num_classes
+    )
 
-    # Create face recognition model
-    face_recognition_model = create_model(input_shape, num_classes)
-    face_recognition_model = compile_model(face_recognition_model)
-
-    # Load the datasets
     face_images, face_labels = load_images("datasets/face_images", (64, 64), 1)
     no_face_images, no_face_labels = load_images("datasets/no_face_images", (64, 64), 0)
     your_face_images, your_face_labels = load_images(
@@ -101,53 +159,28 @@ def main():
         "datasets/other_face_images", (64, 64), 1
     )
 
-    # Train the Face Detection Model
-    train_model(
+    train_face_detection_model(
         face_detection_model,
-        np.concatenate((face_images, no_face_images)),
-        np.concatenate((face_labels, no_face_labels)),
+        face_images,
+        no_face_images,
+        face_labels,
+        no_face_labels,
         epochs,
     )
 
-    # Train the Face Recognition Model
-    train_model(
+    train_face_recognition_model(
         face_recognition_model,
-        np.concatenate((your_face_images, other_face_images)),
-        np.concatenate((your_face_labels, other_face_labels)),
+        your_face_images,
+        other_face_images,
+        your_face_labels,
+        other_face_labels,
         epochs,
     )
 
-    # Initialize the video capture
     cap = cv2.VideoCapture(0)
 
-    while True:
-        # Read the frame from the video capture
-        ret, original_frame = cap.read()
+    capture_and_process_frames(cap, face_detection_model, face_recognition_model)
 
-        # Preprocess the frame for face detection
-        frame = preprocess_frame(original_frame, (64, 64))
-
-        # Perform face detection
-        face_label = perform_inference(frame, face_detection_model)
-
-        if face_label == 1:
-            # Preprocess the frame for face recognition
-            frame = preprocess_frame(original_frame, (64, 64))
-
-            # Perform face recognition
-            your_face_label = perform_inference(frame, face_recognition_model)
-
-            # Display the inference on the frame
-            display_inference(original_frame, your_face_label)
-
-        # Display the original frame
-        cv2.imshow("Live Inference", original_frame)
-
-        # Break the loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-    # Release the video capture and close all windows
     cap.release()
     cv2.destroyAllWindows()
 
