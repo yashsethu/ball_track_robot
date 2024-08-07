@@ -2,21 +2,67 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import cv2
 from tensorflow.lite.python import interpreter as interpreter_wrapper
+from sklearn.model_selection import train_test_split
+import os
+import time
+
+
+# Function to generate data from webcam
+def generate_data_from_webcam(num_samples):
+    # Create directory if it doesn't exist
+    if not os.path.exists("datasets"):
+        os.makedirs("datasets")
+
+    # Capture the webcam feed
+    cap = cv2.VideoCapture(0)
+
+    # Loop to capture frames and save as images
+    for i in range(num_samples):
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+
+        # Preprocess the frame
+        frame = cv2.resize(frame, (200, 200))
+        frame = frame / 255.0
+
+        # Save the frame as an image
+        filename = f"datasets/sample_{i}.jpg"
+        cv2.imwrite(filename, frame)
+
+        # Display the frame
+        cv2.imshow("frame", frame)
+
+        # Break the loop on 'q' key press
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+        # Delay between capturing frames
+        time.sleep(0.1)
+
+    # Release the capture
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+# Generate data from webcam and save to /datasets directory
+generate_data_from_webcam(10)
+
+# Rest of the code...
+
 
 # Load and preprocess the dataset
 datagen = ImageDataGenerator(rescale=1.0 / 255)
+# Import the necessary modules
+# Split the first dataset into training and testing sets
+train_data_1, test_data_1 = train_test_split(train_generator_1, test_size=0.2)
 
-# Create the first dataset
-train_generator_1 = datagen.flow_from_directory("/datasets_1", target_size=(200, 200))
+# Split the second dataset into training and testing sets
+train_data_2, test_data_2 = train_test_split(train_generator_2, test_size=0.2)
 
-# Create the second dataset
-train_generator_2 = datagen.flow_from_directory("/datasets_2", target_size=(200, 200))
-
-# Filter the second dataset
-train_generator_2_filtered = datagen.flow_from_directory(
-    "/datasets_2_filtered", target_size=(200, 200)
+# Split the filtered second dataset into training and testing sets
+train_data_2_filtered, test_data_2_filtered = train_test_split(
+    train_generator_2_filtered, test_size=0.2
 )
-
 
 # Define the model
 base_model = tf.keras.applications.MobileNetV2(
