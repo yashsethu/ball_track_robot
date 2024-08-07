@@ -32,9 +32,8 @@ def generate_data_from_webcam(num_samples):
         # Display the frame
         cv2.imshow("frame", frame)
 
-        # Break the loop on 'q' key press
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        # Wait for user confirmation to proceed to the next frame
+        cv2.waitKey(0)
 
         # Delay between capturing frames
         time.sleep(0.1)
@@ -49,10 +48,9 @@ generate_data_from_webcam(10)
 
 # Rest of the code...
 
-
 # Load and preprocess the dataset
 datagen = ImageDataGenerator(rescale=1.0 / 255)
-# Import the necessary modules
+
 # Split the first dataset into training and testing sets
 train_data_1, test_data_1 = train_test_split(train_generator_1, test_size=0.2)
 
@@ -62,6 +60,25 @@ train_data_2, test_data_2 = train_test_split(train_generator_2, test_size=0.2)
 # Split the filtered second dataset into training and testing sets
 train_data_2_filtered, test_data_2_filtered = train_test_split(
     train_generator_2_filtered, test_size=0.2
+)
+
+# Lower the resolution, resize the image, and change the colors
+def preprocess_image(image):
+    # Lower the resolution
+    image = cv2.resize(image, (100, 100))
+
+    # Change the colors
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    return image
+
+# Preprocess the images in the datasets
+train_data_1 = [(preprocess_image(image), label) for image, label in train_data_1]
+test_data_1 = [(preprocess_image(image), label) for image, label in test_data_1]
+train_data_2 = [(preprocess_image(image), label) for image, label in train_data_2]
+test_data_2 = [(preprocess_image(image), label) for image, label in test_data_2]
+train_data_2_filtered = [(preprocess_image(image), label) for image, label in train_data_2_filtered]
+test_data_2_filtered = [(preprocess_image(image), label) for image, label in test_data_2_filtered]
 )
 
 # Define the model
