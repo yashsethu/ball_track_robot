@@ -2,19 +2,58 @@ import cv2
 import numpy as np
 from pycoral.adapters import classify
 from pycoral.utils.edgetpu import make_interpreter
+import tensorflow as tf
+import tensorflow as tf
 
-# Load the model
-model_path = "path/to/your/model.tflite"
-interpreter = make_interpreter(model_path)
-interpreter.allocate_tensors()
+# Load the trained object detection model
+model = tf.keras.models.load_model("path/to/trained_model.h5")
 
-# Get input and output details
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+# Convert the model to TFLite format
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]  # Apply optimizations
+converter.target_spec.supported_ops = [
+    tf.lite.OpsSet.TFLITE_BUILTINS,
+    tf.lite.OpsSet.SELECT_TF_OPS,
+]  # Set supported operations
+tflite_model = converter.convert()
 
-# Get input and output shapes
-input_shape = input_details[0]["shape"]
-output_shape = output_details[0]["shape"]
+# Save the TFLite model to a file
+with open("path/to/tflite_model.tflite", "wb") as f:
+    f.write(tflite_model)
+    # Define the model architecture
+    model = tf.keras.Sequential()
+    model.add(
+        tf.keras.layers.Conv2D(
+            32,
+            (3, 3),
+            activation="relu",
+            input_shape=(input_height, input_width, input_channels),
+        )
+    )
+    model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+    model.add(tf.keras.layers.Conv2D(64, (3, 3), activation="relu"))
+    model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+    model.add(tf.keras.layers.Conv2D(64, (3, 3), activation="relu"))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(64, activation="relu"))
+    model.add(tf.keras.layers.Dense(num_classes, activation="softmax"))
+
+    # Compile the model
+    model.compile(
+        optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+    )
+
+    # Train the model
+    model.fit(
+        train_images,
+        train_labels,
+        epochs=num_epochs,
+        validation_data=(val_images, val_labels),
+    )
+
+    # Save the trained model
+    model.save("path/to/trained_model.h5")
+
 
 # Open the webcam
 cap = cv2.VideoCapture(0)
