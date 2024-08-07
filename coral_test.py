@@ -17,6 +17,57 @@ converter.target_spec.supported_ops = [
 ]  # Set supported operations
 tflite_model = converter.convert()
 
+
+def generate_image_data():
+    # Open the webcam
+    cap = cv2.VideoCapture(0)
+
+    # Set the desired resolution and size
+    width = 320
+    height = 240
+
+    # Set the capture properties
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+    while True:
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+
+        # Convert the frame to image data
+        image_data = cv2.imencode(".jpg", frame)[1].tobytes()
+
+        # Yield the image data
+        yield image_data
+
+    # Release the webcam
+    cap.release()
+
+
+def split_data(data, test_ratio):
+    """
+    Split the data into training and testing sets.
+
+    Args:
+        data (list): The data to be split.
+        test_ratio (float): The ratio of the testing set size to the total data size.
+
+    Returns:
+        tuple: A tuple containing the training set and testing set.
+    """
+    # Calculate the number of samples for the testing set
+    test_size = int(len(data) * test_ratio)
+
+    # Shuffle the data randomly
+    np.random.shuffle(data)
+
+    # Split the data into training and testing sets
+    train_data = data[:-test_size]
+    test_data = data[-test_size:]
+
+    return train_data, test_data
+
+
 # Save the TFLite model to a file
 with open("path/to/tflite_model.tflite", "wb") as f:
     f.write(tflite_model)
