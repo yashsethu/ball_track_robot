@@ -1,22 +1,22 @@
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import cv2
-import tensorflow as tf
 from tensorflow.lite.python import interpreter as interpreter_wrapper
-from tensorflow.lite.python import util
 
 # Load and preprocess the dataset
 datagen = ImageDataGenerator(rescale=1.0 / 255)
 train_generator = datagen.flow_from_directory("/datasets", target_size=(200, 200))
 
 # Define the model
-model = tf.keras.applications.MobileNetV2(input_shape=(200, 200, 3), include_top=False)
-model.trainable = False
-model = tf.keras.Sequential([model, tf.keras.layers.Dense(1)])
+base_model = tf.keras.applications.MobileNetV2(
+    input_shape=(200, 200, 3), include_top=False
+)
+base_model.trainable = False
+model = tf.keras.Sequential([base_model, tf.keras.layers.Dense(1)])
 
 # Compile the model
 model.compile(
-    optimizer="adam",
+    optimizer=tf.keras.optimizers.Adam(),
     loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
     metrics=["accuracy"],
 )
@@ -26,9 +26,6 @@ model.fit(train_generator, epochs=5)
 
 # Save the model
 model.save("model.h5")
-
-# Load the model
-model = tf.keras.models.load_model("model.h5")
 
 # Convert the model to TensorFlow Lite format
 converter = tf.lite.TFLiteConverter.from_keras_model(model)
@@ -42,10 +39,6 @@ with open("model.tflite", "wb") as f:
 interpreter = interpreter_wrapper.Interpreter(model_path="model.tflite")
 interpreter.allocate_tensors()
 
-# Get input and output details
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-
 # Capture the webcam feed
 cap = cv2.VideoCapture(0)
 
@@ -58,12 +51,14 @@ while True:
     frame = frame / 255.0
 
     # Set the input tensor
+    input_details = interpreter.get_input_details()
     interpreter.set_tensor(input_details[0]["index"], frame[None, ...])
 
     # Run inference
     interpreter.invoke()
 
     # Get the output tensor
+    output_details = interpreter.get_output_details()
     output = interpreter.get_tensor(output_details[0]["index"])
 
     # Draw bounding boxes and labels on the frame (this is a placeholder, you need a proper function here)
