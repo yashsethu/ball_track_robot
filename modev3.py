@@ -62,6 +62,7 @@ train_data_2_filtered, test_data_2_filtered = train_test_split(
     train_generator_2_filtered, test_size=0.2
 )
 
+
 # Lower the resolution, resize the image, and change the colors
 def preprocess_image(image):
     # Lower the resolution
@@ -72,14 +73,18 @@ def preprocess_image(image):
 
     return image
 
+
 # Preprocess the images in the datasets
 train_data_1 = [(preprocess_image(image), label) for image, label in train_data_1]
 test_data_1 = [(preprocess_image(image), label) for image, label in test_data_1]
 train_data_2 = [(preprocess_image(image), label) for image, label in train_data_2]
 test_data_2 = [(preprocess_image(image), label) for image, label in test_data_2]
-train_data_2_filtered = [(preprocess_image(image), label) for image, label in train_data_2_filtered]
-test_data_2_filtered = [(preprocess_image(image), label) for image, label in test_data_2_filtered]
-)
+train_data_2_filtered = [
+    (preprocess_image(image), label) for image, label in train_data_2_filtered
+]
+test_data_2_filtered = [
+    (preprocess_image(image), label) for image, label in test_data_2_filtered
+]
 
 # Define the model
 base_model = tf.keras.applications.MobileNetV2(
