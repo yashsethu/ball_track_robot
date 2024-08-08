@@ -92,26 +92,31 @@ def perform_inference(frame):
         return frame
 
 
-# Open the webcam
-cap = cv2.VideoCapture(0)
+def main():
+    # Open the webcam
+    cap = cv2.VideoCapture(0)
 
-while True:
-    # Read a frame from the webcam
-    ret, frame = cap.read()
+    while True:
+        # Read a frame from the webcam
+        ret, frame = cap.read()
 
-    if not ret:
-        break
+        if not ret:
+            break
 
-    # Perform inference on the frame
-    output_frame = perform_inference(frame)
+        # Perform inference on the frame
+        output_frame = perform_inference(frame)
 
-    # Display the output frame
-    cv2.imshow("Webcam", output_frame)
+        # Display the output frame
+        cv2.imshow("Webcam", output_frame)
 
-    # Check for the 'q' key to exit
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+        # Check for the 'q' key to exit
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
-# Release the webcam and close the windows
-cap.release()
-cv2.destroyAllWindows()
+    # Release the webcam and close the windows
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()

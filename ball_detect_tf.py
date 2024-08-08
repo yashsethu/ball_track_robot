@@ -11,8 +11,7 @@ import os
 # Function to capture and save images
 def capture_data():
     # Create the directory if it doesn't exist
-    if not os.path.exists("dataset/ball_images"):
-        os.makedirs("dataset/ball_images")
+    os.makedirs("dataset/ball_images", exist_ok=True)
 
     # Open the camera
     cap = cv2.VideoCapture(0)
@@ -54,7 +53,7 @@ predictions = Dense(1, activation="sigmoid")(x)
 # This is the model we will train
 model = Model(inputs=base_model.input, outputs=predictions)
 
-# First, we will only train the top layers (which were randomly initialized)
+# Freeze the base model layers
 for layer in base_model.layers:
     layer.trainable = False
 
@@ -79,7 +78,7 @@ model.fit(train_generator, validation_data=validation_generator, epochs=10)
 model.save("path/to/save/model")
 
 # Load the saved model
-loaded_model = model
+loaded_model = tf.keras.models.load_model("path/to/save/model")
 
 # Capture and add data to the dataset
 capture_data()
