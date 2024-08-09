@@ -8,42 +8,30 @@ import time
 from motor import forward, stop, sharp_left, sharp_right
 from ball import find_color_mask, find_largest_contour
 
-pan = 16
-tilt = 26
+# Constants
+PAN_PIN = 16
+TILT_PIN = 26
+PAN_CENTER = 1500
+TILT_CENTER = 1500
+MIN_RADIUS = 40
 
-pan_a = 1500
-tilt_a = 1500
-
-v_direction = "none"
-h_direction = "right"
-
+# Initialize GPIO and PWM
+GPIO.setup(PAN_PIN, GPIO.OUT)
+GPIO.setup(TILT_PIN, GPIO.OUT)
 pwm = pigpio.pi()
+pwm.set_mode(PAN_PIN, pigpio.OUTPUT)
+pwm.set_mode(TILT_PIN, pigpio.OUTPUT)
+pwm.set_PWM_frequency(PAN_PIN, 50)
+pwm.set_PWM_frequency(TILT_PIN, 50)
 
-pwm.set_mode(pan, pigpio.OUTPUT)
-pwm.set_mode(tilt, pigpio.OUTPUT)
-
-pwm.set_PWM_frequency(pan, 50)
-pwm.set_PWM_frequency(tilt, 50)
-
-print("90 deg")
-pwm.set_servo_pulsewidth(pan, 1500)
-pwm.set_servo_pulsewidth(tilt, 1500)
-
+# Initialize sensors
 sensor_proximity = 10
 rerouting_proximity = 17.5
-
 sensor_C = DistanceSensor(echo=18, trigger=22)
 sensor_L = DistanceSensor(echo=29, trigger=31)
 sensor_R = DistanceSensor(echo=32, trigger=33)
 
-GPIO.setup(16, GPIO.OUT)
-GPIO.setup(15, GPIO.OUT)
-GPIO.setup(11, GPIO.OUT)
-GPIO.setup(13, GPIO.OUT)
-
-redLower = (150, 140, 1)
-redUpper = (190, 255, 255)
-
+# Initialize camera
 picam2 = Picamera2()
 picam2.configure(
     picam2.create_preview_configuration(main={"format": "RGB888", "size": (320, 240)})
@@ -52,10 +40,17 @@ picam2.start()
 time.sleep(1)
 
 
+# Helper functions
 def linear_scale(value, in_min, in_max, out_min, out_max):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
+def no_obstacle(distance_C, distance_L, distance_R):
+    # Implement your logic here
+    pass
+
+
+# Main loop
 while True:
     try:
         frame = picam2.capture_array()
@@ -65,12 +60,10 @@ while True:
             break
 
         height, width = frame.shape[:2]
-
         print(str(height) + " X " + str(width))
 
         mask = find_color_mask(frame)
         x, y, radius, center, area = find_largest_contour(mask)
-
         print("Area: " + str(area))
         print("Coordinates: " + str(x) + ", " + str(y))
 
@@ -79,7 +72,7 @@ while True:
         distance_R = sensor_R.distance * 100
         print("D: " + str(distance_C) + ", " + str(distance_L) + ", " + str(distance_R))
 
-        if radius > 40:
+        if radius > MIN_RADIUS:
             found = True
             in_frame = True
             cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
@@ -129,83 +122,14 @@ while True:
         stop()
         break
 
-while True:
-    frame = picam2.capture_array()
-
-    mask = find_color_mask(frame)
-    x, y, radius, center, area = find_largest_contour(mask)
-
-    if radius > 20:
-        found = True
-        cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
-        cv2.circle(frame, center, 5, (255, 0, 0), -1)
-    else:
-        found = False
-
-    def linear_scale(value, in_min, in_max, out_min, out_max):
-        return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-
-    if found:
-        if x < 130:
-            h_direction = "left"
-            if x < 110:
-                pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a - 20)
-            else:
-                pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a)
-            pwm.set_servo_pulsewidth(pan, pan_a)
-        elif x > 190:
-            h_direction = "right"
-            if x > 210:
-                pan_a = linear_scale(pan_a, 500, 2500, pan_a - 20, pan_a + 20)
-            else:
-                pan_a = linear_scale(pan_a, 500, 2500, pan_a, pan_a + 20)
-            pwm.set_servo_pulsewidth(pan, pan_a)
-
-        if y > 150:
-            v_direction = "up"
-            if y > 170:
-                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a - 20)
-            else:
-                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a)
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
-        elif y < 90:
-            v_direction = "down"
-            if y < 70:
-                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a - 20, tilt_a + 20)
-            else:
-                tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a, tilt_a + 20)
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
-
-    elif v_direction != "none" and h_direction != "none":
-        if h_direction == "left":
-            pan_a = linear_scale(pan_a, 500, 2500, pan_a + 20, pan_a - 20)
-            pwm.set_servo_pulsewidth(pan, pan_a)
-        elif h_direction == "right":
-            pan_a = linear_scale(pan_a, 500, 2500, pan_a - 20, pan_a + 20)
-            pwm.set_servo_pulsewidth(pan, pan_a)
-
-        if v_direction == "up":
-            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a + 20, tilt_a - 20)
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
-        elif v_direction == "down":
-            tilt_a = linear_scale(tilt_a, 500, 2500, tilt_a - 20, tilt_a + 20)
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
-
-    cv2.imshow("Feed", frame)
-
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-
-pwm.set_servo_pulsewidth(pan, 1500)
-pwm.set_servo_pulsewidth(tilt, 1500)
+# Clean up
+pwm.set_servo_pulsewidth(PAN_PIN, PAN_CENTER)
+pwm.set_servo_pulsewidth(TILT_PIN, TILT_CENTER)
 sleep(1)
-
-pwm.set_PWM_dutycycle(pan, 0)
-pwm.set_PWM_dutycycle(tilt, 0)
-
-pwm.set_PWM_frequency(pan, 0)
-pwm.set_PWM_frequency(tilt, 0)
-
+pwm.set_PWM_dutycycle(PAN_PIN, 0)
+pwm.set_PWM_dutycycle(TILT_PIN, 0)
+pwm.set_PWM_frequency(PAN_PIN, 0)
+pwm.set_PWM_frequency(TILT_PIN, 0)
 cv2.destroyAllWindows()
 picam2.stop()
 GPIO.cleanup()

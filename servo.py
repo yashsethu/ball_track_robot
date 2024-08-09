@@ -2,120 +2,57 @@ import pigpio
 import time
 from picamera2 import Picamera2
 import cv2
-import time
 from ball import find_color_mask, find_largest_contour
-import os
 
-redLower = (150, 140, 1)
-redUpper = (190, 255, 255)
+# Constants
+RED_LOWER = (150, 140, 1)
+RED_UPPER = (190, 255, 255)
+FRAME_WIDTH = 320
+FRAME_HEIGHT = 240
+HORIZONTAL_FOV = 54
+VERTICAL_FOV = 41
+PAN_SERVO_PIN = 16
+TILT_SERVO_PIN = 26
+PAN_SERVO_CENTER = 1500
+TILT_SERVO_CENTER = 1500
+PWM_MIN = 500
+PWM_MAX = 2500
+DEGREE_MIN = 0
+DEGREE_MAX = 180
+DEADZONE = 20
 
+# Initialize pigpio
+pwm = pigpio.pi()
+pwm.set_mode(PAN_SERVO_PIN, pigpio.OUTPUT)
+pwm.set_mode(TILT_SERVO_PIN, pigpio.OUTPUT)
+pwm.set_PWM_frequency(PAN_SERVO_PIN, 50)
+pwm.set_PWM_frequency(TILT_SERVO_PIN, 50)
+
+# Initialize PiCamera
 picam2 = Picamera2()
 picam2.configure(
-    picam2.create_preview_configuration(main={"format": "RGB888", "size": (320, 240)})
+    picam2.create_preview_configuration(
+        main={"format": "RGB888", "size": (FRAME_WIDTH, FRAME_HEIGHT)}
+    )
 )
 picam2.start()
 time.sleep(1)
 
-pan = 16
-tilt = 26
-
-pan_a = 1500
-tilt_a = 1500
-
+# Initialize variables
+pan_angle = 0
+tilt_angle = 0
+h_direction = "none"
 v_direction = "none"
-h_direction = "right"
 
 
-def calculate_pwm(x, y, pan_a, tilt_a, h_direction, v_direction):
-    # Assume a 640x480 image and a 54x41 degree FOV
-    image_width = 640
-    image_height = 480
-    fov_width = 54
-    fov_height = 41
-
-    # Convert the angles to PWM signals
-    # Assume a servo with a range of 0 to 180 degrees and a PWM signal of 500 to 2500 microseconds
-    pwm_width = 2000  # 2500 - 500
-    pwm_center = 1500  # (2500 + 500) / 2
-
-    # Deadzone
-    deadzone = 20
-
-    if x < (image_width / 2) - deadzone:
-        h_direction = "left"
-        if pan_a < 2500:
-            pan_a += int(
-                10 * ((image_width / 2) - deadzone - x) / (image_width / 2)
-            )  # Linear scaling for PWM increments
-    elif x > (image_width / 2) + deadzone:
-        h_direction = "right"
-        if pan_a > 500:
-            pan_a -= int(
-                10 * (x - (image_width / 2) - deadzone) / (image_width / 2)
-            )  # Linear scaling for PWM increments
-
-    if y < (image_height / 2) - deadzone:
-        v_direction = "up"
-        if tilt_a < 2500:
-            tilt_a += int(
-                10 * ((image_height / 2) - deadzone - y) / (image_height / 2)
-            )  # Linear scaling for PWM increments
-    elif y > (image_height / 2) + deadzone:
-        v_direction = "down"
-        if tilt_a > 500:
-            tilt_a -= int(
-                10 * (y - (image_height / 2) - deadzone) / (image_height / 2)
-            )  # Linear scaling for PWM increments
-
-    return pan_a, tilt_a, h_direction, v_direction
-
-
-pwm = pigpio.pi()
-
-pwm.set_mode(pan, pigpio.OUTPUT)
-pwm.set_mode(tilt, pigpio.OUTPUT)
-
-pwm.set_PWM_frequency(pan, 50)
-pwm.set_PWM_frequency(tilt, 50)
-
-print("90 deg")
-pwm.set_servo_pulsewidth(pan, 1500)
-pwm.set_servo_pulsewidth(tilt, 1500)
-time.sleep(1)
-
-
-def calculate_pwm_values(
-    x_ball,
-    y_ball,
-    frame_width=320,
-    frame_height=240,
-    horizontal_fov=54,
-    vertical_fov=41,
-):
-    # Constants
-    PAN_SERVO_CENTER = 90
-    TILT_SERVO_CENTER = 90
-
-    PWM_MIN = 500
-    PWM_MAX = 2500
-    DEGREE_MIN = 0
-    DEGREE_MAX = 180
-
-    # Center of the frame
-    x_center = frame_width / 2
-    y_center = frame_height / 2
-
-    # Offsets from the center
-    delta_x = x_ball - x_center
-    delta_y = y_ball - y_center
-
+def calculate_pwm_values(x, y):
     # Calculate angular displacement
-    theta_pan = (delta_x / frame_width) * horizontal_fov
-    theta_tilt = (delta_y / frame_height) * vertical_fov
+    theta_pan = (x - FRAME_WIDTH / 2) / FRAME_WIDTH * HORIZONTAL_FOV
+    theta_tilt = (y - FRAME_HEIGHT / 2) / FRAME_HEIGHT * VERTICAL_FOV
 
     # Calculate servo angles
     servo_angle_pan = PAN_SERVO_CENTER + theta_pan
-    servo_angle_tilt = TILT_SERVO_CENTER - theta_tilt  # subtract for tilt
+    servo_angle_tilt = TILT_SERVO_CENTER - theta_tilt
 
     # Map servo angles to PWM values
     pwm_pan = PWM_MIN + (servo_angle_pan - DEGREE_MIN) * (PWM_MAX - PWM_MIN) / (
@@ -128,8 +65,41 @@ def calculate_pwm_values(
     return pwm_pan, pwm_tilt
 
 
-found = False
+def move_servos(x, y):
+    global pan_angle, tilt_angle, h_direction, v_direction
 
+    # Calculate PWM values
+    pwm_pan, pwm_tilt = calculate_pwm_values(x, y)
+
+    # Update servo angles and directions
+    if x < FRAME_WIDTH / 2 - DEADZONE:
+        h_direction = "left"
+        if pan_angle < 2500:
+            pan_angle += int(10 * (FRAME_WIDTH / 2 - DEADZONE - x) / (FRAME_WIDTH / 2))
+    elif x > FRAME_WIDTH / 2 + DEADZONE:
+        h_direction = "right"
+        if pan_angle > 500:
+            pan_angle -= int(10 * (x - FRAME_WIDTH / 2 - DEADZONE) / (FRAME_WIDTH / 2))
+
+    if y < FRAME_HEIGHT / 2 - DEADZONE:
+        v_direction = "up"
+        if tilt_angle < 2500:
+            tilt_angle += int(
+                10 * (FRAME_HEIGHT / 2 - DEADZONE - y) / (FRAME_HEIGHT / 2)
+            )
+    elif y > FRAME_HEIGHT / 2 + DEADZONE:
+        v_direction = "down"
+        if tilt_angle > 500:
+            tilt_angle -= int(
+                10 * (y - FRAME_HEIGHT / 2 - DEADZONE) / (FRAME_HEIGHT / 2)
+            )
+
+    # Move servos
+    pwm.set_servo_pulsewidth(PAN_SERVO_PIN, pan_angle)
+    pwm.set_servo_pulsewidth(TILT_SERVO_PIN, tilt_angle)
+
+
+# Main loop
 while True:
     frame = picam2.capture_array()
 
@@ -137,71 +107,23 @@ while True:
     x, y, radius, center, area = find_largest_contour(mask)
 
     if radius > 20:
-        found = True
         cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
         cv2.circle(frame, center, 5, (255, 0, 0), -1)
-    else:
-        found = False
 
-    if found:
-        if x < 150:
-            h_direction = "left"
-            if pan_a < 2500:
-                pan_a += 10
-            pwm.set_servo_pulsewidth(pan, pan_a)
-        elif x > 170:
-            h_direction = "right"
-            if pan_a > 500:
-                pan_a -= 10
-            pwm.set_servo_pulsewidth(pan, pan_a)
+        move_servos(x, y)
 
-        if y > 130:
-            v_direction = "up"
-            if tilt_a < 2500:
-                tilt_a += 10
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
-        elif y < 110:
-            v_direction = "down"
-            if tilt_a > 500:
-                tilt_a -= 10
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
+    cv2.imshow("Feed", frame)
 
-    elif v_direction != "none" and h_direction != "none":
-        if h_direction == "left":
-            if pan_a < 2500:
-                pan_a += 10
-            pwm.set_servo_pulsewidth(pan, pan_a)
-        elif h_direction == "right":
-            if pan_a > 500:
-                pan_a -= 10
-            pwm.set_servo_pulsewidth(pan, pan_a)
-
-        if v_direction == "up":
-            if tilt_a < 2500:
-                tilt_a += 10
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
-        elif v_direction == "down":
-            if tilt_a > 500:
-                tilt_a -= 10
-            pwm.set_servo_pulsewidth(tilt, tilt_a)
-
-    cv2.imshow("Feed", frame)  # Shows frame with bounding box
-
-    if cv2.waitKey(1) & 0xFF == ord("q"):  # Press q to break the loop and stop moving
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-
 # Cleanup
-print("90 deg")
-pwm.set_servo_pulsewidth(pan, 1500)
-pwm.set_servo_pulsewidth(tilt, 1500)
+pwm.set_servo_pulsewidth(PAN_SERVO_PIN, PAN_SERVO_CENTER)
+pwm.set_servo_pulsewidth(TILT_SERVO_PIN, TILT_SERVO_CENTER)
 time.sleep(1)
-
-pwm.set_PWM_dutycycle(pan, 0)
-pwm.set_PWM_dutycycle(tilt, 0)
-
-pwm.set_PWM_frequency(pan, 0)
-pwm.set_PWM_frequency(tilt, 0)
-
+pwm.set_PWM_dutycycle(PAN_SERVO_PIN, 0)
+pwm.set_PWM_dutycycle(TILT_SERVO_PIN, 0)
+pwm.set_PWM_frequency(PAN_SERVO_PIN, 0)
+pwm.set_PWM_frequency(TILT_SERVO_PIN, 0)
 cv2.destroyAllWindows()
 picam2.stop()
