@@ -34,12 +34,19 @@ def sonar(trigger, echo):
     return distance
 
 
-try:
-    while True:
-        distances = [sonar(trigger, echo) for trigger, echo in zip(triggers, echos)]
-        print(f"Center: {distances[0]}, Left: {distances[1]}, Right: {distances[2]}")
-        time.sleep(0.1)
-except KeyboardInterrupt:
-    print("Program terminated by user")
-finally:
-    GPIO.cleanup()
+def main():
+    try:
+        while True:
+            distances = [sonar(trigger, echo) for trigger, echo in zip(triggers, echos)]
+            print(
+                f"Center: {distances[0]}, Left: {distances[1]}, Right: {distances[2]}"
+            )
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("Program terminated by user")
+    finally:
+        GPIO.cleanup()
+
+
+if __name__ == "__main__":
+    main()

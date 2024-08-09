@@ -1,5 +1,4 @@
 import RPi.GPIO as GPIO
-from time import sleep
 
 GPIO.setmode(GPIO.BOARD)
 
@@ -9,73 +8,57 @@ MOTOR1E = 15
 MOTOR2B = 11  # RIGHT motor
 MOTOR2E = 13
 
-GPIO.setup(MOTOR1B, GPIO.OUT)
-GPIO.setup(MOTOR1E, GPIO.OUT)
-GPIO.setup(MOTOR2B, GPIO.OUT)
-GPIO.setup(MOTOR2E, GPIO.OUT)
+GPIO.setup([MOTOR1B, MOTOR1E, MOTOR2B, MOTOR2E], GPIO.OUT)
+
+
+def set_motor_pins(motor_b, motor_e, value):
+    GPIO.output(motor_b, value)
+    GPIO.output(motor_e, not value)
 
 
 def forward():
-    GPIO.output(MOTOR1B, GPIO.HIGH)
-    GPIO.output(MOTOR1E, GPIO.LOW)
-    GPIO.output(MOTOR2B, GPIO.HIGH)
-    GPIO.output(MOTOR2E, GPIO.LOW)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.HIGH)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.HIGH)
 
 
 def reverse():
-    GPIO.output(MOTOR1B, GPIO.LOW)
-    GPIO.output(MOTOR1E, GPIO.HIGH)
-    GPIO.output(MOTOR2B, GPIO.LOW)
-    GPIO.output(MOTOR2E, GPIO.HIGH)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.LOW)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.LOW)
 
 
 def leftturn():
-    GPIO.output(MOTOR1B, GPIO.LOW)
-    GPIO.output(MOTOR1E, GPIO.LOW)
-    GPIO.output(MOTOR2B, GPIO.HIGH)
-    GPIO.output(MOTOR2E, GPIO.LOW)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.LOW)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.HIGH)
 
 
 def rightturn():
-    GPIO.output(MOTOR1B, GPIO.HIGH)
-    GPIO.output(MOTOR1E, GPIO.LOW)
-    GPIO.output(MOTOR2B, GPIO.LOW)
-    GPIO.output(MOTOR2E, GPIO.LOW)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.HIGH)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.LOW)
 
 
 def stop():
-    GPIO.output(MOTOR1B, GPIO.LOW)
-    GPIO.output(MOTOR1E, GPIO.LOW)
-    GPIO.output(MOTOR2B, GPIO.LOW)
-    GPIO.output(MOTOR2E, GPIO.LOW)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.LOW)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.LOW)
 
 
 def sharp_left():
-    GPIO.output(MOTOR1B, GPIO.LOW)
-    GPIO.output(MOTOR1E, GPIO.HIGH)
-    GPIO.output(MOTOR2B, GPIO.HIGH)
-    GPIO.output(MOTOR2E, GPIO.LOW)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.LOW)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.HIGH)
 
 
 def sharp_right():
-    GPIO.output(MOTOR1B, GPIO.HIGH)
-    GPIO.output(MOTOR1E, GPIO.LOW)
-    GPIO.output(MOTOR2B, GPIO.LOW)
-    GPIO.output(MOTOR2E, GPIO.HIGH)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.HIGH)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.LOW)
 
 
 def back_left():
-    GPIO.output(MOTOR1B, GPIO.LOW)
-    GPIO.output(MOTOR1E, GPIO.LOW)
-    GPIO.output(MOTOR2B, GPIO.LOW)
-    GPIO.output(MOTOR2E, GPIO.HIGH)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.LOW)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.LOW)
 
 
 def back_right():
-    GPIO.output(MOTOR1B, GPIO.LOW)
-    GPIO.output(MOTOR1E, GPIO.HIGH)
-    GPIO.output(MOTOR2B, GPIO.LOW)
-    GPIO.output(MOTOR2E, GPIO.LOW)
+    set_motor_pins(MOTOR1B, MOTOR1E, GPIO.LOW)
+    set_motor_pins(MOTOR2B, MOTOR2E, GPIO.HIGH)
 
 
 def cleanup():

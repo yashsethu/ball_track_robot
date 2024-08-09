@@ -25,9 +25,17 @@ def process_frame(frame):
 # Define a video capture object
 vid = cv2.VideoCapture(0)
 
+if not vid.isOpened():
+    print("Failed to open video capture.")
+    exit()
+
 while True:
     # Capture the video frame by frame
     ret, frame = vid.read()
+
+    if not ret:
+        print("Failed to capture frame.")
+        break
 
     # Process the frame
     processed_frame = process_frame(frame)
@@ -54,6 +62,9 @@ while True:
     # Check for quit key
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
+
+    # Save the processed frame as an image
+    cv2.imwrite("processed_frame.jpg", processed_frame)
 
 # Release the video capture object
 vid.release()
