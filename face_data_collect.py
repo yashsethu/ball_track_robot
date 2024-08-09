@@ -4,8 +4,7 @@ import os
 
 def capture_images(directory):
     # Create the directory if it doesn't exist
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    os.makedirs(directory, exist_ok=True)
 
     # Open the webcam
     cap = cv2.VideoCapture(0)
@@ -22,24 +21,23 @@ def capture_images(directory):
         )
 
         # Wait for user feedback
-        while True:
-            key = cv2.waitKey(1)
+        key = cv2.waitKey(1)
 
-            # If Enter is pressed, save the frame to the directory
-            if key == 13:  # 13 is the ASCII value for Enter
-                cv2.imwrite(os.path.join(directory, f"image_{count}.jpg"), frame)
-                count += 1
-                break
+        # If Enter is pressed, save the frame to the directory
+        if key == 13:  # 13 is the ASCII value for Enter
+            cv2.imwrite(os.path.join(directory, f"image_{count}.jpg"), frame)
+            count += 1
 
-            # If Delete is pressed, discard the current frame
-            elif key == 127:  # 127 is the ASCII value for Delete
-                break
+        # If Delete is pressed, discard the current frame
+        elif key == 127:  # 127 is the ASCII value for Delete
+            continue
 
-            # If 'q' is pressed, break from the loop
-            elif key == ord("q"):
-                cap.release()
-                cv2.destroyAllWindows()
-                return
+        # If 'q' is pressed, break from the loop
+        elif key == ord("q"):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 
 # Capture images for each category

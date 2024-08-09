@@ -1,38 +1,42 @@
 import cv2
 import matplotlib.pyplot as plt
 
-# define a video capture object
-vid = cv2.VideoCapture(0)
 
-while True:
-    # Capture the video frame
-    # by frame
-    ret, frame = vid.read()
-
+def process_frame(frame):
     # Resize the frame
     frame = cv2.resize(frame, (640, 480))
 
-    # Change resolution
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # Convert frame to grayscale
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # Apply blur
-    frame = cv2.GaussianBlur(frame, (5, 5), 0)
+    blurred_frame = cv2.GaussianBlur(gray_frame, (5, 5), 0)
 
-    # Apply erosion
+    # Apply erosion and dilation
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    frame = cv2.erode(frame, kernel, iterations=1)
-
-    # Apply dilation
-    frame = cv2.dilate(frame, kernel, iterations=1)
+    processed_frame = cv2.morphologyEx(blurred_frame, cv2.MORPH_OPEN, kernel)
 
     # Rotate 90 degrees
-    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    rotated_frame = cv2.rotate(processed_frame, cv2.ROTATE_90_CLOCKWISE)
+
+    return rotated_frame
+
+
+# Define a video capture object
+vid = cv2.VideoCapture(0)
+
+while True:
+    # Capture the video frame by frame
+    ret, frame = vid.read()
+
+    # Process the frame
+    processed_frame = process_frame(frame)
 
     # Display the resulting frame
-    cv2.imshow("frame", frame)
+    cv2.imshow("frame", processed_frame)
 
     # Convert frame to RGB for matplotlib
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+    frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_GRAY2RGB)
 
     # Calculate color statistics
     color_stats = cv2.mean(frame_rgb)
@@ -47,13 +51,12 @@ while True:
     plt.title("Color Statistics")
     plt.show()
 
-    # the 'q' button is set as the
-    # quitting button you may use any
-    # desired button of your choice
+    # Check for quit key
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-# After the loop release the cap object
+# Release the video capture object
 vid.release()
-# Destroy all the windows
+
+# Close all windows
 cv2.destroyAllWindows()
