@@ -1,5 +1,6 @@
 import tensorflow as tf
 import cv2
+import numpy as np
 
 # Define the model architecture
 model = tf.keras.Sequential(
@@ -26,43 +27,61 @@ model.compile(
 # Print the model summary
 model.summary()
 
+
+def collect_data(num_samples):
+    # Initialize the webcam
+    cap = cv2.VideoCapture(0)
+
+    # Initialize lists to store training and testing data
+    train_data = []
+    train_labels = []
+    test_data = []
+    test_labels = []
+
+    # Collect data from the webcam
+    for i in range(num_samples):
+        # Read frame from the webcam
+        ret, frame = cap.read()
+
+        # Preprocess the frame (resize, normalize, etc.)
+        preprocessed_frame = preprocess(frame)
+
+        # Display the frame
+        cv2.imshow("Collecting Data", frame)
+
+        # Collect training data for the first half of the samples
+        if i < num_samples // 2:
+            train_data.append(preprocessed_frame)
+            train_labels.append(label)
+        # Collect testing data for the second half of the samples
+        else:
+            test_data.append(preprocessed_frame)
+            test_labels.append(label)
+
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+    # Release the webcam and close the window
+    cap.release()
+    cv2.destroyAllWindows()
+
+    # Convert the data lists to numpy arrays
+    train_data = np.array(train_data)
+    train_labels = np.array(train_labels)
+    test_data = np.array(test_data)
+    test_labels = np.array(test_labels)
+
+    return train_data, train_labels, test_data, test_labels
+
+
+# Collect training and testing data sets
+train_data, train_labels, test_data, test_labels = collect_data(num_samples=100)
+
 # Train the model
 model.fit(train_data, train_labels, epochs=num_epochs, batch_size=batch_size)
 
-# Load the trained model
-model = tf.keras.models.load_model("path_to_model.h5")
-
-# Define the class labels
-class_labels = ["class1", "class2", "class3", ...]
-
-# Initialize the webcam
-cap = cv2.VideoCapture(0)
-
-while True:
-    # Read frame from the webcam
-    ret, frame = cap.read()
-
-    # Preprocess the frame (resize, normalize, etc.)
-    preprocessed_frame = preprocess(frame)
-
-    # Perform inference
-    predictions = model.predict(preprocessed_frame)
-
-    # Get the predicted class label
-    predicted_label = class_labels[np.argmax(predictions)]
-
-    # Display the predicted label on the frame
-    cv2.putText(
-        frame, predicted_label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2
-    )
-
-    # Display the frame
-    cv2.imshow("Live Inference", frame)
-
-    # Break the loop if 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-
-# Release the webcam and close the window
-cap.release()
-cv2.destroyAllWindows()
+# Evaluate the model on the testing data
+test_loss, test_accuracy = model.evaluate(test_data, test_labels)
+print("Test Loss:", test_loss)
+print("Test Accuracy:", test_accuracy)
