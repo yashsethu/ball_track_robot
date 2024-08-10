@@ -14,9 +14,6 @@ def collect_data_from_webcam(num_samples):
         # Capture frame-by-frame
         ret, frame = cap.read()
 
-        # Preprocess the frame (resize, normalize, etc.)
-        # ...
-
         # Append the preprocessed frame to the data list
         data.append(frame)
 
@@ -71,15 +68,8 @@ def live_inference():
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
-
-        # Preprocess the frame (resize, normalize, etc.)
-        # ...
-
         # Perform inference using the trained model
         predictions = model.predict(frame)
-
-        # Process the predictions
-        # ...
 
         # Display the frame with predictions
         cv2.imshow("Live Inference", frame)
