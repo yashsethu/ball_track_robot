@@ -57,48 +57,48 @@ while True:
             raise Exception("Error: Frame not captured")
 
         height, width = frame.shape[:2]
-        print(f"{height} X {width}")
+        # print(f"{height} X {width}")
 
         mask = find_color_mask(frame)
         x, y, radius, center, area = find_largest_contour(mask)
-        print(f"Area: {area}")
-        print(f"Coordinates: {x}, {y}")
+        # print(f"Area: {area}")
+        # print(f"Coordinates: {x}, {y}")
 
         distance_C = sensor_C.distance * 100
         distance_L = sensor_L.distance * 100
         distance_R = sensor_R.distance * 100
-        print(f"D: {distance_C}, {distance_L}, {distance_R}")
+        # print(f"D: {distance_C}, {distance_L}, {distance_R}")
 
         found = radius > MIN_RADIUS
         in_frame = found
 
         if not no_obstacle(distance_C, distance_L, distance_R):
-            print("Obstacle detected")
+            # print("Obstacle detected")
             stop()
-            sleep(0.05)
+            time.sleep(0.05)
         elif not found:
             sharp_right()
-            sleep(0.075)
+            time.sleep(0.075)
             stop()
         elif found and in_frame:
             if x > 260:
                 h_direction = "right"
                 sharp_right()
-                sleep(0.075)
+                time.sleep(0.075)
             elif x < 60:
                 h_direction = "left"
                 sharp_left()
-                sleep(0.075)
+                time.sleep(0.075)
             elif 110 <= x <= 210:
                 forward()
-                sleep(0.2)
+                time.sleep(0.2)
             stop()
         elif found and not in_frame:
             if h_direction == "right":
                 sharp_right()
             elif h_direction == "left":
                 sharp_left()
-            sleep(0.075)
+            time.sleep(0.075)
             stop()
 
         print(h_direction)

@@ -37,8 +37,6 @@ while True:
         mask = find_color_mask(frame)
         x, y, radius, center, area = find_largest_contour(mask)
 
-        # Add the rest of your code here...
-
     except Exception as e:
         print(f"Error: {e}")
         stop()
