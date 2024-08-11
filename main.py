@@ -116,7 +116,7 @@ while True:
 # Clean up
 pwm.set_servo_pulsewidth(PAN_PIN, PAN_CENTER)
 pwm.set_servo_pulsewidth(TILT_PIN, TILT_CENTER)
-sleep(1)
+time.sleep(1)
 pwm.set_PWM_dutycycle(PAN_PIN, 0)
 pwm.set_PWM_dutycycle(TILT_PIN, 0)
 pwm.set_PWM_frequency(PAN_PIN, 0)

@@ -8,6 +8,15 @@ import matplotlib.pyplot as plt
 
 
 def load_model(model_path):
+    """
+    Load the TensorFlow model from the given path.
+
+    Args:
+        model_path (Path): Path to the saved model directory.
+
+    Returns:
+        Tuple: Tuple containing the TensorFlow session and other required tensors.
+    """
     detection_graph = tf.Graph()
     with detection_graph.as_default():
         model = tf.saved_model.load(str(model_path))
@@ -30,6 +39,19 @@ def load_model(model_path):
 
 
 def filter_detections(boxes, scores, classes, num_detections, min_score_thresh):
+    """
+    Filter the detected objects based on the confidence score threshold.
+
+    Args:
+        boxes (np.ndarray): Detected bounding boxes.
+        scores (np.ndarray): Confidence scores of the detections.
+        classes (np.ndarray): Class labels of the detections.
+        num_detections (np.ndarray): Number of detections.
+        min_score_thresh (float): Minimum confidence score threshold.
+
+    Returns:
+        List: List of filtered detections.
+    """
     detections = []
     for i in range(int(num_detections[0])):
         if scores[0][i] > min_score_thresh:
@@ -45,6 +67,16 @@ def filter_detections(boxes, scores, classes, num_detections, min_score_thresh):
 
 
 def visualize_results(image_np, boxes, classes, scores, category_index):
+    """
+    Visualize the detected objects on the image.
+
+    Args:
+        image_np (np.ndarray): Input image.
+        boxes (np.ndarray): Detected bounding boxes.
+        classes (np.ndarray): Class labels of the detections.
+        scores (np.ndarray): Confidence scores of the detections.
+        category_index (dict): Mapping of class IDs to class names.
+    """
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
         np.squeeze(boxes),
@@ -57,6 +89,12 @@ def visualize_results(image_np, boxes, classes, scores, category_index):
 
 
 def plot_scores(scores):
+    """
+    Plot the object detection scores.
+
+    Args:
+        scores (np.ndarray): Confidence scores of the detections.
+    """
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 3, 1)
     plt.bar(range(len(scores[0])), scores[0])
@@ -66,6 +104,13 @@ def plot_scores(scores):
 
 
 def plot_classes(classes, category_index):
+    """
+    Plot the object detection classes.
+
+    Args:
+        classes (np.ndarray): Class labels of the detections.
+        category_index (dict): Mapping of class IDs to class names.
+    """
     plt.subplot(1, 3, 2)
     class_names = [category_index[class_id]["name"] for class_id in classes[0]]
     plt.barh(range(len(class_names)), scores[0])
@@ -76,6 +121,16 @@ def plot_classes(classes, category_index):
 
 
 def plot_bounding_boxes(image_np, boxes, classes, scores, category_index):
+    """
+    Plot the object detection bounding boxes.
+
+    Args:
+        image_np (np.ndarray): Input image.
+        boxes (np.ndarray): Detected bounding boxes.
+        classes (np.ndarray): Class labels of the detections.
+        scores (np.ndarray): Confidence scores of the detections.
+        category_index (dict): Mapping of class IDs to class names.
+    """
     plt.subplot(1, 3, 3)
     image_with_boxes = image_np.copy()
     vis_util.visualize_boxes_and_labels_on_image_array(
@@ -108,59 +163,59 @@ categories = label_map_util.convert_label_map_to_categories(
 category_index = label_map_util.create_category_index(categories)
 
 # Open the webcam
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+with cv2.VideoCapture(0) as cap:
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
 
-# Load the model and create the session
-sess, image_np_expanded, image_tensor, boxes, scores, classes, num_detections = (
-    load_model(model_path)
-)
-
-while True:
-    ret, image_np = cap.read()
-
-    # Copy the image to the fixed-size numpy array
-    np.copyto(image_np_expanded[0], image_np)
-
-    # Perform object detection
-    (boxes, scores, classes, num_detections) = sess.run(
-        [boxes, scores, classes, num_detections],
-        feed_dict={image_tensor: image_np_expanded},
+    # Load the model and create the session
+    sess, image_np_expanded, image_tensor, boxes, scores, classes, num_detections = (
+        load_model(model_path)
     )
 
-    # Filter objects based on confidence score
-    min_score_thresh = 0.5
-    detections = filter_detections(
-        boxes, scores, classes, num_detections, min_score_thresh
-    )
+    while True:
+        ret, image_np = cap.read()
 
-    # Print the top 3 detected objects
-    top_3_detections = detections[:3]
-    for i, detection in enumerate(top_3_detections):
-        class_name = category_index[detection["class"]]["name"]
-        print(f"Top {i+1} detection: {class_name} (Score: {detection['score']})")
+        # Copy the image to the fixed-size numpy array
+        np.copyto(image_np_expanded[0], image_np)
 
-    # Visualize the results
-    visualize_results(image_np, boxes, classes, scores, category_index)
+        # Perform object detection
+        (boxes, scores, classes, num_detections) = sess.run(
+            [boxes, scores, classes, num_detections],
+            feed_dict={image_tensor: image_np_expanded},
+        )
 
-    # Display the resulting image
-    cv2.imshow("Object Detection", image_np)
+        # Filter objects based on confidence score
+        min_score_thresh = 0.5
+        detections = filter_detections(
+            boxes, scores, classes, num_detections, min_score_thresh
+        )
 
-    # Plot the scores
-    plot_scores(scores)
+        # Print the top 3 detected objects
+        top_3_detections = detections[:3]
+        for i, detection in enumerate(top_3_detections):
+            class_name = category_index[detection["class"]]["name"]
+            print(f"Top {i+1} detection: {class_name} (Score: {detection['score']})")
 
-    # Plot the classes
-    plot_classes(classes, category_index)
+        # Visualize the results
+        visualize_results(image_np, boxes, classes, scores, category_index)
 
-    # Plot the bounding boxes
-    plot_bounding_boxes(image_np, boxes, classes, scores, category_index)
+        # Display the resulting image
+        cv2.imshow("Object Detection", image_np)
 
-    plt.tight_layout()
-    plt.show()
+        # Plot the scores
+        plot_scores(scores)
 
-    if cv2.waitKey(1) == ord("q"):
-        break
+        # Plot the classes
+        plot_classes(classes, category_index)
+
+        # Plot the bounding boxes
+        plot_bounding_boxes(image_np, boxes, classes, scores, category_index)
+
+        plt.tight_layout()
+        plt.show()
+
+        if cv2.waitKey(1) == ord("q"):
+            break
 
 # Release the webcam and close all windows
 cap.release()
