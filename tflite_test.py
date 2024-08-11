@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import tensorflow as tf
+import time
+import matplotlib.pyplot as plt
 
 # Define the architecture of the models
 models = []
@@ -53,6 +55,8 @@ video_capture = cv2.VideoCapture(0)
 
 dataset_images = []
 dataset_labels = []
+dataset_images_2 = []
+dataset_labels_2 = []
 
 image_number = 1
 
@@ -87,6 +91,8 @@ while True:
 # Convert the dataset to numpy arrays
 dataset_images = np.array(dataset_images)
 dataset_labels = np.array(dataset_labels)
+dataset_images_2 = np.array(dataset_images_2)
+dataset_labels_2 = np.array(dataset_labels_2)
 
 # Save the dataset to file
 np.savez("dataset.npz", images=dataset_images, labels=dataset_labels)
@@ -101,8 +107,6 @@ model.fit(dataset_images, dataset_labels, epochs=10, validation_split=0.2)
 # Capture video from webcam
 video_capture = cv2.VideoCapture(0)
 
-import matplotlib.pyplot as plt
-
 while True:
     # Read each frame from the video feed
     ret, frame = video_capture.read()
@@ -113,11 +117,17 @@ while True:
     frame = frame / 255.0
 
     # Make predictions using the first model
+    start_time = time.time()
     predictions_1 = models[0].predict(frame)
+    end_time = time.time()
+    inference_time_1 = end_time - start_time
     predicted_class_1 = np.argmax(predictions_1)
 
     # Make predictions using the second model
+    start_time = time.time()
     predictions_2 = models[1].predict(frame)
+    end_time = time.time()
+    inference_time_2 = end_time - start_time
     predicted_class_2 = np.argmax(predictions_2)
 
     if predicted_class_1 == 1:  # Assuming that your face is class 1
@@ -147,6 +157,25 @@ while True:
     plt.xlabel("Class")
     plt.ylabel("Probability")
     plt.show()
+
+    # Print inference times
+    print("Inference Time for Model 1:", inference_time_1)
+    print("Inference Time for Model 2:", inference_time_2)
+
+    # Calculate mean, maximum, and minimum probability scores
+    mean_prob_1 = np.mean(predictions_1)
+    mean_prob_2 = np.mean(predictions_2)
+    max_prob_1 = np.max(predictions_1)
+    max_prob_2 = np.max(predictions_2)
+    min_prob_1 = np.min(predictions_1)
+    min_prob_2 = np.min(predictions_2)
+
+    print("Mean Probability for Model 1:", mean_prob_1)
+    print("Mean Probability for Model 2:", mean_prob_2)
+    print("Maximum Probability for Model 1:", max_prob_1)
+    print("Maximum Probability for Model 2:", max_prob_2)
+    print("Minimum Probability for Model 1:", min_prob_1)
+    print("Minimum Probability for Model 2:", min_prob_2)
 
     # Break the loop if 'q' is pressed
     if cv2.waitKey(1) & 0xFF == ord("q"):

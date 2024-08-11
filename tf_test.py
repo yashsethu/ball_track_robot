@@ -1,5 +1,6 @@
 import cv2
 import time
+import matplotlib.pyplot as plt
 
 # Define the lower and upper bounds for the red color
 redLower = (150, 140, 1)
@@ -15,6 +16,12 @@ picam2.configure(
 )
 picam2.start()
 time.sleep(2)
+
+# Lists to store accuracy values
+accuracy_values = []
+probability_values = []
+camera_data = []
+inference_times = []
 
 
 # Returns a mask of all colors within the red HSV space
@@ -67,9 +74,60 @@ while True:
 
     cv2.imshow("Tracking", frame)
 
+    # Calculate accuracy and append to the list
+    accuracy = radius / 10.0
+    accuracy_values.append(accuracy)
+
+    # Calculate probability and append to the list
+    probability = 1 - (accuracy / 10.0)
+    probability_values.append(probability)
+
+    # Append camera data to the list
+    camera_data.append(frame)
+
+    # Measure inference time
+    start_time = time.time()
+
     if cv2.waitKey(1) & 0xFF == ord("q"):  # Press q to break the loop and stop moving
         break
 
+    inference_time = time.time() - start_time
+    inference_times.append(inference_time)
+
+# Plot the accuracy graph
+plt.plot(accuracy_values)
+plt.xlabel("Frame")
+plt.ylabel("Accuracy")
+plt.title("Accuracy over Time")
+plt.show()
+
+# Plot the probability graph
+plt.plot(probability_values)
+plt.xlabel("Frame")
+plt.ylabel("Probability")
+plt.title("Probability over Time")
+plt.show()
+
+# Plot the inference time graph
+plt.plot(inference_times)
+plt.xlabel("Frame")
+plt.ylabel("Inference Time (s)")
+plt.title("Inference Time over Time")
+plt.show()
+
+# Display camera data
+for frame in camera_data:
+    cv2.imshow("Camera Data", frame)
+    if cv2.waitKey(1) & 0xFF == ord(
+        "q"
+    ):  # Press q to break the loop and stop displaying camera data
+        break
+
+# Release the video capture object
+vid.release()
+
+# Destroy all the windows
+cv2.destroyAllWindows()
 cv2.destroyAllWindows()
 picam2.stop()
 
