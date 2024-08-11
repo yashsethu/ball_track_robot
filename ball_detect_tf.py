@@ -6,6 +6,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 import cv2
 import os
+import matplotlib.pyplot as plt
 
 
 def capture_data():
@@ -49,7 +50,25 @@ validation_generator = datagen.flow_from_directory(
     "dataset", target_size=(224, 224), class_mode="binary", subset="validation"
 )
 
-model.fit(train_generator, validation_data=validation_generator, epochs=10)
+history = model.fit(train_generator, validation_data=validation_generator, epochs=10)
+
+# Plotting the training and validation accuracy
+plt.plot(history.history["accuracy"])
+plt.plot(history.history["val_accuracy"])
+plt.title("Model Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend(["Train", "Validation"], loc="upper left")
+plt.show()
+
+# Plotting the training and validation loss
+plt.plot(history.history["loss"])
+plt.plot(history.history["val_loss"])
+plt.title("Model Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.legend(["Train", "Validation"], loc="upper left")
+plt.show()
 
 model.save("path/to/save/model")
 

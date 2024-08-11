@@ -181,4 +181,20 @@ def live_inference():
 
 
 # Call the live inference function
-live_inference()
+# Plot the standard deviation of each image
+std_deviation = np.std(x_train, axis=(1, 2))
+plt.figure(figsize=(6, 4))
+plt.plot(std_deviation, color="gray")
+plt.xlabel("Image Index")
+plt.ylabel("Standard Deviation")
+plt.title("Standard Deviation of Images")
+plt.show()
+
+# Plot the maximum intensity of each image
+max_intensity = np.max(x_train, axis=(1, 2))
+plt.figure(figsize=(6, 4))
+plt.plot(max_intensity, color="gray")
+plt.xlabel("Image Index")
+plt.ylabel("Maximum Intensity")
+plt.title("Maximum Intensity of Images")
+plt.show()
