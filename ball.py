@@ -1,12 +1,12 @@
 import cv2
+import numpy as np
 
-redLower = (150, 140, 1)
-redUpper = (190, 255, 255)
+redLower = np.array([150, 140, 1])
+redUpper = np.array([190, 255, 255])
 
 
 def find_color_mask(frame):
-    resized_frame = cv2.resize(frame, (320, 240))
-    hsv = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, redLower, redUpper)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
     mask = cv2.erode(mask, kernel, iterations=2)

@@ -11,32 +11,25 @@ class MotorController:
         GPIO.output(self.motor_b, value)
         GPIO.output(self.motor_e, not value)
 
-    def forward(self):
-        self.set_motor_pins(GPIO.HIGH)
-
-    def reverse(self):
-        self.set_motor_pins(GPIO.LOW)
-
-    def leftturn(self):
-        self.set_motor_pins(GPIO.LOW)
-
-    def rightturn(self):
-        self.set_motor_pins(GPIO.HIGH)
-
-    def stop(self):
-        self.set_motor_pins(GPIO.LOW)
-
-    def sharp_left(self):
-        self.set_motor_pins(GPIO.LOW)
-
-    def sharp_right(self):
-        self.set_motor_pins(GPIO.HIGH)
-
-    def back_left(self):
-        self.set_motor_pins(GPIO.LOW)
-
-    def back_right(self):
-        self.set_motor_pins(GPIO.HIGH)
+    def move(self, direction):
+        if direction == "forward":
+            self.set_motor_pins(GPIO.HIGH)
+        elif direction == "reverse":
+            self.set_motor_pins(GPIO.LOW)
+        elif direction == "leftturn":
+            self.set_motor_pins(GPIO.LOW)
+        elif direction == "rightturn":
+            self.set_motor_pins(GPIO.HIGH)
+        elif direction == "stop":
+            self.set_motor_pins(GPIO.LOW)
+        elif direction == "sharp_left":
+            self.set_motor_pins(GPIO.LOW)
+        elif direction == "sharp_right":
+            self.set_motor_pins(GPIO.HIGH)
+        elif direction == "back_left":
+            self.set_motor_pins(GPIO.LOW)
+        elif direction == "back_right":
+            self.set_motor_pins(GPIO.HIGH)
 
     @staticmethod
     def cleanup():

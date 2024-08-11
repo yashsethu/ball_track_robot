@@ -1,11 +1,9 @@
 import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 
 
 def process_frame(frame):
-    # Resize the frame
-    frame = cv2.resize(frame, (640, 480))
-
     # Convert frame to grayscale
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -22,52 +20,59 @@ def process_frame(frame):
     return rotated_frame
 
 
-# Define a video capture object
-vid = cv2.VideoCapture(0)
+def main():
+    # Define a video capture object
+    vid = cv2.VideoCapture(0)
 
-if not vid.isOpened():
-    print("Failed to open video capture.")
-    exit()
+    if not vid.isOpened():
+        print("Failed to open video capture.")
+        exit()
 
-while True:
-    # Capture the video frame by frame
-    ret, frame = vid.read()
+    while True:
+        # Capture the video frame by frame
+        ret, frame = vid.read()
 
-    if not ret:
-        print("Failed to capture frame.")
-        break
+        if not ret:
+            print("Failed to capture frame.")
+            break
 
-    # Process the frame
-    processed_frame = process_frame(frame)
+        # Resize the frame
+        frame = cv2.resize(frame, (640, 480))
 
-    # Display the resulting frame
-    cv2.imshow("frame", processed_frame)
+        # Process the frame
+        processed_frame = process_frame(frame)
 
-    # Convert frame to RGB for matplotlib
-    frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_GRAY2RGB)
+        # Display the resulting frame
+        cv2.imshow("frame", processed_frame)
 
-    # Calculate color statistics
-    color_stats = cv2.mean(frame_rgb)
+        # Calculate color statistics
+        color_stats = np.mean(processed_frame, axis=(0, 1))
 
-    # Plot color statistics
-    plt.bar(
-        range(len(color_stats)), color_stats, color=["red", "green", "blue", "alpha"]
-    )
-    plt.xticks(range(len(color_stats)), ["Red", "Green", "Blue", "Alpha"])
-    plt.xlabel("Color Channel")
-    plt.ylabel("Mean Value")
-    plt.title("Color Statistics")
-    plt.show()
+        # Plot color statistics
+        plt.bar(
+            range(len(color_stats)),
+            color_stats,
+            color=["red", "green", "blue", "alpha"],
+        )
+        plt.xticks(range(len(color_stats)), ["Red", "Green", "Blue", "Alpha"])
+        plt.xlabel("Color Channel")
+        plt.ylabel("Mean Value")
+        plt.title("Color Statistics")
+        plt.show()
 
-    # Check for quit key
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+        # Check for quit key
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
-    # Save the processed frame as an image
-    cv2.imwrite("processed_frame.jpg", processed_frame)
+        # Save the processed frame as an image
+        cv2.imwrite("processed_frame.jpg", processed_frame)
 
-# Release the video capture object
-vid.release()
+    # Release the video capture object
+    vid.release()
 
-# Close all windows
-cv2.destroyAllWindows()
+    # Close all windows
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()

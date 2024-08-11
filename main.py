@@ -45,10 +45,8 @@ def linear_scale(value, in_min, in_max, out_min, out_max):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def no_obstacle(distance_C, distance_L, distance_R):
-    # Implement your logic here
-    pass
-
+# Initialize variables outside the loop
+h_direction = None
 
 # Main loop
 while True:
@@ -56,30 +54,23 @@ while True:
         frame = picam2.capture_array()
 
         if frame is None:
-            print("Error: Frame not captured")
-            break
+            raise Exception("Error: Frame not captured")
 
         height, width = frame.shape[:2]
-        print(str(height) + " X " + str(width))
+        print(f"{height} X {width}")
 
         mask = find_color_mask(frame)
         x, y, radius, center, area = find_largest_contour(mask)
-        print("Area: " + str(area))
-        print("Coordinates: " + str(x) + ", " + str(y))
+        print(f"Area: {area}")
+        print(f"Coordinates: {x}, {y}")
 
         distance_C = sensor_C.distance * 100
         distance_L = sensor_L.distance * 100
         distance_R = sensor_R.distance * 100
-        print("D: " + str(distance_C) + ", " + str(distance_L) + ", " + str(distance_R))
+        print(f"D: {distance_C}, {distance_L}, {distance_R}")
 
-        if radius > MIN_RADIUS:
-            found = True
-            in_frame = True
-            cv2.circle(frame, (int(x), int(y)), int(radius), (255, 0, 0), 2)
-            cv2.circle(frame, center, 5, (255, 0, 0), -1)
-        else:
-            found = False
-            in_frame = False
+        found = radius > MIN_RADIUS
+        in_frame = found
 
         if not no_obstacle(distance_C, distance_L, distance_R):
             print("Obstacle detected")
@@ -118,7 +109,7 @@ while True:
             stop()
             break
     except Exception as e:
-        print("Error:", str(e))
+        print(f"Error: {e}")
         stop()
         break
 
