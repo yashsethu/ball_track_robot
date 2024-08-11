@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 # Load the trained TensorFlow Lite model
 try:
@@ -27,6 +28,14 @@ class_labels = [
     "White Ball",
     "Gray Ball",
 ]
+
+# Initialize lists to store confidence scores over time
+confidence_scores = []
+time_steps = []
+
+# Initialize lists to store inference times and performance
+inference_times = []
+performance = []
 
 
 # Function to preprocess the input frame
@@ -75,6 +84,10 @@ def perform_inference(frame):
         predicted_class = np.argmax(output_data, axis=1)[0]
         predicted_label = class_labels[predicted_class]
 
+        # Store the confidence score and time step
+        confidence_scores.append(output_data[0][predicted_class])
+        time_steps.append(len(time_steps) + 1)
+
         # Draw the predicted label on the frame
         cv2.putText(
             frame,
@@ -104,7 +117,16 @@ def main():
             break
 
         # Perform inference on the frame
+        start_time = time.time()
         output_frame = perform_inference(frame)
+        end_time = time.time()
+
+        # Calculate inference time
+        inference_time = end_time - start_time
+        inference_times.append(inference_time)
+
+        # Calculate performance (frames per second)
+        performance.append(1 / inference_time)
 
         # Display the output frame
         cv2.imshow("Webcam", output_frame)
@@ -116,6 +138,53 @@ def main():
     # Release the webcam and close the windows
     cap.release()
     cv2.destroyAllWindows()
+
+    # Plot the confidence scores over time
+    plt.plot(time_steps, confidence_scores)
+    plt.xlabel("Time Step")
+    plt.ylabel("Confidence Score")
+    plt.title("Confidence Scores Over Time")
+    plt.show()
+
+    # Plot the inference times over time
+    plt.plot(time_steps, inference_times)
+    plt.xlabel("Time Step")
+    plt.ylabel("Inference Time (s)")
+    plt.title("Inference Times Over Time")
+    plt.show()
+
+    # Plot the performance over time
+    plt.plot(time_steps, performance)
+    plt.xlabel("Time Step")
+    plt.ylabel("Performance (fps)")
+    plt.title("Performance Over Time")
+    plt.show()
+
+    # Plot the confidence scores, inference times, and performance on the same graph
+    fig, ax1 = plt.subplots()
+
+    color = "tab:red"
+    ax1.set_xlabel("Time Step")
+    ax1.set_ylabel("Confidence Score", color=color)
+    ax1.plot(time_steps, confidence_scores, color=color)
+    ax1.tick_params(axis="y", labelcolor=color)
+
+    ax2 = ax1.twinx()
+    color = "tab:blue"
+    ax2.set_ylabel("Inference Time (s)", color=color)
+    ax2.plot(time_steps, inference_times, color=color)
+    ax2.tick_params(axis="y", labelcolor=color)
+
+    ax3 = ax1.twinx()
+    color = "tab:green"
+    ax3.spines["right"].set_position(("outward", 60))
+    ax3.set_ylabel("Performance (fps)", color=color)
+    ax3.plot(time_steps, performance, color=color)
+    ax3.tick_params(axis="y", labelcolor=color)
+
+    fig.tight_layout()
+    plt.title("Metrics Over Time")
+    plt.show()
 
 
 if __name__ == "__main__":
