@@ -80,8 +80,7 @@ class PerformanceWindow(Gtk.Window):
         ax = fig.gca()
 
         # Get the existing CPU usage data
-        x_data = ax.lines[0].get_xdata()
-        y_data = ax.lines[0].get_ydata()
+        x_data, y_data = ax.lines[0].get_data()
 
         # Append the new CPU usage data
         x_data = list(x_data) + [len(x_data)]
