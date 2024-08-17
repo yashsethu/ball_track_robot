@@ -1,90 +1,57 @@
-import board
-import adafruit_dotstar as dotstar
 import time
-
-# Import the necessary libraries
 import RPi.GPIO as GPIO
+import adafruit_dotstar as dotstar
+import colorsys
+import board
 
 # Set up the GPIO pins
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(5, GPIO.OUT)
-GPIO.setup(6, GPIO.OUT)
-
-# Define the directions
-directions = {17: "Up", 27: "Down", 22: "Left", 23: "Right", 24: "Center"}
+GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Select
+GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Left
+GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Up
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Right
+GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Down
 
 # Initialize the DotStar LED
-dot = dotstar.DotStar(board.D5, board.D6, 1)
+dots = dotstar.DotStar(board.D6, board.D5, 0.5)
+
+# Define LED colors
+COLOR_SELECT = (255, 0, 0)  # Red
+COLOR_LEFT = (0, 255, 0)  # Green
+COLOR_UP = (0, 0, 255)  # Blue
+COLOR_RIGHT = (255, 255, 0)  # Yellow
+COLOR_DOWN = (255, 0, 255)  # Magenta
 
 
-# Function to detect the direction
-def detect_direction(channel):
-    if channel in directions:
-        direction = directions[channel]
-        print("Direction detected:", direction)
-        if direction == "Up":
-            dot[0] = (255, 0, 0)  # Set LED color to red
-        elif direction == "Down":
-            dot[0] = (0, 255, 0)  # Set LED color to green
-        elif direction == "Left":
-            dot[0] = (0, 0, 255)  # Set LED color to blue
-        elif direction == "Right":
-            dot[0] = (255, 255, 0)  # Set LED color to yellow
-        elif direction == "Center":
-            dot[0] = (255, 255, 255)  # Set LED color to white
+# Function to smoothly change the LED color
+def smooth_rainbow(offset):
+    hue = offset % 360 / 360.0  # Convert the hue to a value between 0 and 1
+    rgb = colorsys.hsv_to_rgb(hue, 1, 1)  # Convert the HSV color to RGB
+    # Convert the RGB values to a scale of 0-255 and set the LED color
+    dots[0] = tuple(int(c * 255) for c in rgb)
 
-
-# Function to blink the LED
-def blink_led():
-    dot[0] = (255, 0, 0)  # Set LED color to red
-    time.sleep(0.5)
-    dot[0] = (0, 0, 0)  # Turn off LED
-    time.sleep(0.5)
-
-
-# Add event detection for each GPIO pin
-for pin in directions.keys():
-    GPIO.add_event_detect(pin, GPIO.FALLING, callback=detect_direction, bouncetime=200)
-
-# Create the GUI
-root = Tk()
-direction_label = Label(root, text="")
-color_label = Label(root, text="")
-direction_label.pack()
-color_label.pack()
-
-
-# Function to detect the direction
-def detect_direction(channel):
-    if channel in directions:
-        direction = directions[channel]
-        print("Direction detected:", direction)
-        direction_label.config(text="Direction detected: " + direction)
-        if direction == "Up":
-            dot[0] = (255, 0, 0)  # Set LED color to red
-            color_label.config(text="LED Color: Red", fg="red")
-        elif direction == "Down":
-            dot[0] = (0, 255, 0)  # Set LED color to green
-            color_label.config(text="LED Color: Green", fg="green")
-        elif direction == "Left":
-            dot[0] = (0, 0, 255)  # Set LED color to blue
-            color_label.config(text="LED Color: Blue", fg="blue")
-        elif direction == "Right":
-            dot[0] = (255, 255, 0)  # Set LED color to yellow
-            color_label.config(text="LED Color: Yellow", fg="yellow")
-
-
-# Add event detection for each GPIO pin
-for pin in directions.keys():
-    GPIO.add_event_detect(pin, GPIO.FALLING, callback=detect_direction, bouncetime=200)
 
 # Main loop
-try:
-    root.mainloop()
-except KeyboardInterrupt:
-    GPIO.cleanup()
+offset = 0
+while True:
+    if GPIO.input(16) == 0:
+        print("Select:", GPIO.input(16))
+        dots.fill(COLOR_SELECT)
+    elif GPIO.input(22) == 0:
+        print("Left:", GPIO.input(22))
+        dots.fill(COLOR_LEFT)
+    elif GPIO.input(17) == 0:
+        print("Up:", GPIO.input(17))
+        dots.fill(COLOR_UP)
+    elif GPIO.input(23) == 0:
+        print("Right:", GPIO.input(23))
+        dots.fill(COLOR_RIGHT)
+    elif GPIO.input(27) == 0:
+        print("Down:", GPIO.input(27))
+        dots.fill(COLOR_DOWN)
+    else:
+        smooth_rainbow(offset)
+        offset += 1
+        time.sleep(
+            0.01
+        )  # Adjust this value to change the speed of the color transition
