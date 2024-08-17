@@ -20,57 +20,70 @@ OBSTACLE_WIDTH = 20
 OBSTACLE_HEIGHT = 50
 DINO_Y = HEIGHT - DINO_HEIGHT
 OBSTACLE_X = WIDTH
+FRAME_RATE = 30
 
 # Set up the game window
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+with pygame.display.set_mode((WIDTH, HEIGHT)) as screen:
+    # Set up the Dino and obstacle
+    dino = pygame.image.load("dino.png").get_rect(midleft=(50, DINO_Y))
+    obstacle = pygame.image.load("obstacle.png").get_rect(midright=(OBSTACLE_X, DINO_Y))
 
-# Set up the Dino and obstacle
-dino = pygame.Rect(50, DINO_Y, 50, DINO_HEIGHT)
-obstacle = pygame.Rect(OBSTACLE_X, DINO_Y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT)
+    # Set up some game variables
+    jump = False
+    jump_height = 10
+    gravity = 1
+    obstacle_speed = 5
 
-# Set up some game variables
-jump = False
-jump_height = 10
-gravity = 1
-obstacle_speed = 5
+    # Set up dictionaries for game settings, images, and colors
+    settings = {"jump_height": 10, "gravity": 1, "obstacle_speed": 5}
 
-# Game loop
-while True:
-    # Event loop
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+    images = {
+        "dino": pygame.image.load("dino.png"),
+        "obstacle": pygame.image.load("obstacle.png"),
+    }
 
-    # Check if the up button is pressed
-    if GPIO.input(16) == GPIO.LOW and dino.y == DINO_Y:
-        jump = True
+    colors = {"white": (255, 255, 255)}
 
-    # Make the Dino jump
-    if jump:
-        dino.y -= jump_height
-        jump_height -= gravity
-        if dino.y >= DINO_Y:
-            dino.y = DINO_Y
-            jump = False
-            jump_height = 10
-
-    # Move the obstacle
-    obstacle.x -= obstacle_speed
-    if obstacle.x < 0:
-        obstacle.x = OBSTACLE_X
-
-    # Check for collision
-    if dino.colliderect(obstacle):
+    def game_over():
         print("Game Over!")
         pygame.quit()
         sys.exit()
 
-    # Draw everything
-    screen.fill((255, 255, 255))
-    pygame.draw.rect(screen, (0, 0, 0), dino)
-    pygame.draw.rect(screen, (0, 0, 0), obstacle)
-    pygame.display.flip()
+    # Game loop
+    while True:
+        # Event loop
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
-    # Cap the frame rate
-    pygame.time.Clock().tick(30)
+        # Check if the up button is pressed
+        if GPIO.input(16) == GPIO.LOW and dino.y == DINO_Y:
+            jump = True
+
+        # Make the Dino jump
+        if jump:
+            dino.y -= settings["jump_height"]
+            settings["jump_height"] -= settings["gravity"]
+            if dino.y >= DINO_Y:
+                dino.y = DINO_Y
+                jump = False
+                settings["jump_height"] = 10
+
+        # Move the obstacle
+        obstacle.x -= settings["obstacle_speed"]
+        if obstacle.x < 0:
+            obstacle.x = OBSTACLE_X
+
+        # Check for collision
+        if dino.colliderect(obstacle):
+            game_over()
+
+        # Draw everything
+        screen.fill(colors["white"])
+        screen.blit(images["dino"], dino)
+        screen.blit(images["obstacle"], obstacle)
+        pygame.display.flip()
+
+        # Cap the frame rate
+        pygame.time.Clock().tick(FRAME_RATE)
