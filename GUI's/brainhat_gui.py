@@ -8,6 +8,18 @@ class BrainCraftHATGUI:
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("BrainCraft HAT GUI")
+        self.window.option_add("*Font", "Helvetica 10")  # Set the font size
+
+        # Get screen width and height
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+
+        # Set window size to screen size
+        self.window.geometry(f"{screen_width}x{screen_height}+0+0")
+
+        self.window.bind(
+            "<Escape>", lambda event: self.window.destroy()
+        )  # Close window with escape key
 
         self.cpu_temp_label = Label(self.window, text="CPU Temperature: ")
         self.cpu_temp_label.pack()
@@ -25,7 +37,7 @@ class BrainCraftHATGUI:
         self.update_labels()
 
     def update_labels(self):
-        cpu_temp = psutil.sensors_temperatures()["cpu-thermal"][0].current
+        cpu_temp = psutil.sensors_temperatures()["cpu_thermal"][0].current
         cpu_usage = psutil.cpu_percent()
         self.cpu_temp_label.config(text=f"CPU Temperature: {cpu_temp}°C")
         self.cpu_usage_label.config(text=f"CPU Usage: {cpu_usage}%")
@@ -71,17 +83,14 @@ gui = BrainCraftHATGUI()
 gui.start()
 
 # Define the GPIO pins for the 5-way switch
-up_button = GPIOButton(2)
-down_button = GPIOButton(3)
-left_button = GPIOButton(4)
-right_button = GPIOButton(14)
-select_button = GPIOButton(15)
-
-# Create the window
-window = tk.Tk()
+select_button = GPIOButton(16, pull_up=True)
+left_button = GPIOButton(22, pull_up=True)
+up_button = GPIOButton(23, pull_up=True)
+right_button = GPIOButton(24, pull_up=True)
+down_button = GPIOButton(27, pull_up=True)
 
 # Create a list of buttons
-buttons = [tk.Button(window, text=f"Button {i}") for i in range(10)]
+buttons = [tk.Button(gui.window, text=f"Button {i}") for i in range(10)]
 for button in buttons:
     button.pack()
 
@@ -126,6 +135,3 @@ down_button.when_pressed = handle_down
 left_button.when_pressed = handle_left
 right_button.when_pressed = handle_right
 select_button.when_pressed = handle_select_button
-
-# Start the main event loop
-window.mainloop()

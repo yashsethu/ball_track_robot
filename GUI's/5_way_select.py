@@ -6,14 +6,16 @@ import board
 
 # Set up the GPIO pins
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Button
 GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Select
 GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Left
-GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Up
-GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Right
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Up
+GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Right
 GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Down
 
+
 # Initialize the DotStar LED
-dots = dotstar.DotStar(board.D6, board.D5, 0.5)
+dots = dotstar.DotStar(board.D6, board.D5, 3, brightness=0.03)
 
 # Define LED colors
 COLOR_SELECT = (255, 0, 0)  # Red
@@ -28,7 +30,7 @@ def smooth_rainbow(offset):
     hue = offset % 360 / 360.0  # Convert the hue to a value between 0 and 1
     rgb = colorsys.hsv_to_rgb(hue, 1, 1)  # Convert the HSV color to RGB
     # Convert the RGB values to a scale of 0-255 and set the LED color
-    dots[0] = tuple(int(c * 255) for c in rgb)
+    dots.fill(tuple(int(c * 255) for c in rgb))
 
 
 # Main loop
@@ -40,15 +42,16 @@ while True:
     elif GPIO.input(22) == 0:
         print("Left:", GPIO.input(22))
         dots.fill(COLOR_LEFT)
-    elif GPIO.input(17) == 0:
+    elif GPIO.input(23) == 0:
         print("Up:", GPIO.input(17))
         dots.fill(COLOR_UP)
-    elif GPIO.input(23) == 0:
+    elif GPIO.input(24) == 0:
         print("Right:", GPIO.input(23))
         dots.fill(COLOR_RIGHT)
     elif GPIO.input(27) == 0:
         print("Down:", GPIO.input(27))
         dots.fill(COLOR_DOWN)
+
     else:
         smooth_rainbow(offset)
         offset += 1
