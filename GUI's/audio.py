@@ -3,6 +3,10 @@ import psutil
 from tkinter import Label, Button
 from gpiozero import Button as GPIOButton
 from flask import Flask, render_template
+import pygame
+import sys
+import RPi.GPIO as GPIO
+
 app = Flask(__name__)
 
 # Set up the GPIO pins
@@ -51,6 +55,28 @@ with pygame.display.set_mode((WIDTH, HEIGHT)) as screen:
         print("Game Over!")
         pygame.quit()
         sys.exit()
+
+    
+picam2 = Picamera2()
+picam2.configure(
+    picam2.create_preview_configuration(main={"format": "RGB888", "size": (320, 240)})
+)
+picam2.start()
+time.sleep(2)
+
+while True:
+    frame = picam2.capture_array()
+
+    if frame is None:
+        print("Error: Frame not captured")
+        break
+
+    cv2.imshow("Frame", frame)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+picam2.stop()
+
 
     # Game loop
     while True:
