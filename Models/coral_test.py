@@ -7,6 +7,32 @@ from pycoral.utils.edgetpu import make_interpreter
 # Load the trained object detection model
 model = tf.keras.models.load_model("path/to/trained_model.h5")
 
+# Define the model architecture
+model = tf.keras.Sequential(
+    [
+        tf.keras.layers.Dense(128, activation="relu", input_shape=(input_dim,)),
+        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dense(64, activation="relu"),
+        tf.keras.layers.Dense(num_classes, activation="softmax"),
+    ]
+)
+
+# Add regularization to the model
+model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.BatchNormalization())
+
+# Compile the model
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+    loss=tf.keras.losses.CategoricalCrossentropy(),
+    metrics=["accuracy"],
+)
+
+# Print the model summary
+model.summary()
+
+
 # Convert the model to TFLite format
 converter = tf.lite.TFLiteConverter.from_keras_model(model)
 converter.optimizations = [tf.lite.Optimize.DEFAULT]  # Apply optimizations
