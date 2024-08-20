@@ -12,21 +12,120 @@ from sklearn.tree import DecisionTreeRegressor
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
-def split_data(X, y):
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-    return X_train, X_test, y_train, y_test
+def collect_data_images(num_samples):
+    if not os.path.exists("datasets/images"):
+        os.makedirs("datasets/images")
+
+    cap = cv2.VideoCapture(0)  # Open the default camera
+
+    for i in range(num_samples):
+        ret, frame = cap.read()  # Read the frame from the camera
+
+        filename = f"datasets/images/sample_{i}.jpg"
+        cv2.imwrite(filename, frame)  # Save the frame as an image
+
+        cv2.imshow("frame", frame)  # Display the frame
+        cv2.waitKey(0)
+
+    cap.release()  # Release the camera
+    cv2.destroyAllWindows()  # Close all windows
 
 
-def collect_data():
-    # TODO: Implement data collection logic
-    pass
+def collect_data_videos(num_samples, duration):
+    if not os.path.exists("datasets/videos"):
+        os.makedirs("datasets/videos")
+
+    cap = cv2.VideoCapture(0)  # Open the default camera
+
+    for i in range(num_samples):
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
+        filename = f"datasets/videos/sample_{i}.avi"
+        out = cv2.VideoWriter(filename, fourcc, 20.0, (640, 480))
+
+        start_time = time.time()
+        while int(time.time() - start_time) < duration:
+            ret, frame = cap.read()  # Read the frame from the camera
+            out.write(frame)  # Write the frame to the video file
+
+            cv2.imshow("frame", frame)  # Display the frame
+            if cv2.waitKey(1) & 0xFF == ord("q"):  # Exit if 'q' is pressed
+                break
+
+        out.release()  # Release the video file
+        cv2.destroyAllWindows()  # Close all windows
+
+    cap.release()  # Release the camera
 
 
-def preprocess_data():
-    # TODO: Implement data preprocessing logic
-    pass
+def collect_data_audio(num_samples, duration):
+    if not os.path.exists("datasets/audio"):
+        os.makedirs("datasets/audio")
+
+    for i in range(num_samples):
+        filename = f"datasets/audio/sample_{i}.wav"
+        duration_seconds = duration * 1000  # Convert duration to milliseconds
+
+        # Record audio using the default microphone
+        audio = sd.rec(int(duration_seconds), samplerate=44100, channels=2)
+        sd.wait()  # Wait until recording is finished
+
+        # Save the recorded audio as a WAV file
+        sf.write(filename, audio, 44100)
+
+        print(f"Audio sample {i} recorded.")
+
+    print("Audio recording completed.")
+
+
+def collect_data_sensor(num_samples):
+    if not os.path.exists("datasets/sensor"):
+        os.makedirs("datasets/sensor")
+
+    for i in range(num_samples):
+        # Read sensor data
+        sensor_data = read_sensor()
+
+        filename = f"datasets/sensor/sample_{i}.txt"
+        with open(filename, "w") as file:
+            file.write(sensor_data)
+
+        print(f"Sensor data sample {i} collected.")
+
+    print("Sensor data collection completed.")
+
+
+def collect_data_gps(num_samples):
+    if not os.path.exists("datasets/gps"):
+        os.makedirs("datasets/gps")
+
+    for i in range(num_samples):
+        # Read GPS data
+        gps_data = read_gps()
+
+        filename = f"datasets/gps/sample_{i}.txt"
+        with open(filename, "w") as file:
+            file.write(gps_data)
+
+        print(f"GPS data sample {i} collected.")
+
+    print("GPS data collection completed.")
+
+
+def collect_data_custom(num_samples):
+    if not os.path.exists("datasets/custom"):
+        os.makedirs("datasets/custom")
+
+    for i in range(num_samples):
+        # Collect custom data
+        custom_data = collect_custom_data()
+
+        filename = f"datasets/custom/sample_{i}.txt"
+        with open(filename, "w") as file:
+            file.write(custom_data)
+
+        print(f"Custom data sample {i} collected.")
+
+    print("Custom data collection completed.")
 
 
 def train_models(X_train, y_train):
