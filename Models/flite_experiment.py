@@ -28,6 +28,23 @@ model.compile(
 model.summary()
 
 
+def process_frame(frame):
+    # Convert frame to grayscale
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Apply blur
+    blurred_frame = cv2.GaussianBlur(gray_frame, (5, 5), 0)
+
+    # Apply erosion and dilation
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    processed_frame = cv2.morphologyEx(blurred_frame, cv2.MORPH_OPEN, kernel)
+
+    # Rotate 90 degrees
+    rotated_frame = cv2.rotate(processed_frame, cv2.ROTATE_90_CLOCKWISE)
+
+    return rotated_frame
+
+
 def collect_data(num_samples):
     # Initialize the webcam
     cap = cv2.VideoCapture(0)
