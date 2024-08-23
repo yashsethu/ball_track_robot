@@ -11,10 +11,6 @@ const rz = bt.randInRange(16.5, 66);
 //Image display. 0 Blot, 1 Klipper Logo, 2 Calibration text, and there's a chance for a blank one
 const img = parseInt(bt.randInRange(0, 4));
 
-//Editable vars. Just uncomment these vars and comment out the random vars above
-//const rx = 0
-//const rz = 66
-//const img = 0
 setDocDimensions(width, height);
 
 //BASE
