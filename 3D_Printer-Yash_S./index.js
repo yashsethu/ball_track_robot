@@ -195,6 +195,222 @@ for (let i = 1; i <= 150; i++) {
   bt.join(wire, curves);
   offset = offset - 0.01;
 }
+
+function toCoords(coords1, coords2 = 0) {
+  let newCoords;
+  if (coords2 != 0) {
+    newCoords = [];
+    newCoords[0] = coords1.split(":");
+    newCoords[0][0] = alphabet[newCoords[0][0]];
+    newCoords[0][1] = parseInt(newCoords[0][1]) + 1;
+    newCoords[1] = coords2.split(":");
+    newCoords[1][0] = alphabet[newCoords[1][0]];
+    newCoords[1][1] = parseInt(newCoords[1][1]) + 1;
+    return [newCoords[0].join(":"), newCoords[1].join(":")];
+  } else {
+    newCoords = coords1.split(":");
+    newCoords[0] = alphabet[newCoords[0]];
+    newCoords[1] = parseInt(newCoords[1]) + 1;
+    return newCoords.join(":");
+  }
+}
+
+function addBoat(coords, orientation, length) {
+  // Renders and updates virtual map
+  let tip, tip2, body;
+  let actualOrien =
+    orientation == "left"
+      ? "right"
+      : orientation == "right"
+      ? "left"
+      : orientation == "up"
+      ? "down"
+      : "up"; //Pass through the render function
+  let lv = orientation == "left" ? "h" : orientation == "right" ? "h" : "v"; //I forgot why i named this as lv so no explaination
+  tip = toCoords(coords.join(":"));
+  if (length < 4) {
+    switch (orientation) {
+      case "left":
+        tip2 = toCoords([coords[0], coords[1] - length + 1].join(":"));
+        body = toCoords(
+          [coords[0], coords[1] - 1].join(":"),
+          [coords[0], coords[1] - length + 2].join(":")
+        ); //Shouldnt exist if 2
+        //use body[0] and body[1] later (remidning myself)
+        break;
+      case "right":
+        tip2 = toCoords([coords[0], coords[1] + length - 1].join(":"));
+        body = toCoords(
+          [coords[0], coords[1] + 1].join(":"),
+          [coords[0], coords[1] + length - 2].join(":")
+        );
+        break;
+      case "up":
+        tip2 = toCoords([coords[0] - length + 1, coords[1]].join(":"));
+        body = toCoords(
+          [coords[0] - 1, coords[1]].join(":"),
+          [coords[0] - length + 2, coords[1]].join(":")
+        );
+        break;
+      case "down":
+        tip2 = toCoords([coords[0] + length - 1, coords[1]].join(":"));
+        body = toCoords(
+          [coords[0] + 1, coords[1]].join(":"),
+          [coords[0] + length - 2, coords[1]].join(":")
+        );
+        break;
+    }
+    if (length <= 2) {
+      let stat = orientation == "right" || orientation == "down" ? false : true; // I have no idea why this logic works tbh
+      renderBoat([tip], [body[0], body[0]], actualOrien[0], lv, stat);
+    } else {
+      renderBoat([tip, tip2], body, actualOrien[0], lv);
+    }
+  } else if (length == 4) {
+    if (bt.rand() <= 0.5) {
+      switch (
+        orientation //less cool ship
+      ) {
+        case "left":
+          tip2 = toCoords([coords[0], coords[1] - length + 1].join(":"));
+          body = toCoords(
+            [coords[0], coords[1] - length + 2].join(":"),
+            [coords[0], coords[1] - 1].join(":")
+          ); //Shouldnt exist if 2
+          //use body[0] and body[1] later (remidning myself)
+          break;
+        case "right": //only this works
+          tip2 = toCoords([coords[0], coords[1] + length - 1].join(":"));
+          body = toCoords(
+            [coords[0], coords[1] + 1].join(":"),
+            [coords[0], coords[1] + length - 2].join(":")
+          );
+          break;
+        case "up":
+          tip2 = toCoords([coords[0] - length + 1, coords[1]].join(":"));
+          body = toCoords(
+            [coords[0] - length + 2, coords[1]].join(":"),
+            [coords[0] - 1, coords[1]].join(":")
+          );
+          break;
+        case "down":
+          tip2 = toCoords([coords[0] + length - 1, coords[1]].join(":"));
+          body = toCoords(
+            [coords[0] + 1, coords[1]].join(":"),
+            [coords[0] + length - 2, coords[1]].join(":")
+          );
+          break;
+      }
+      renderBoat([tip, tip2], body, actualOrien[0], lv);
+    } else {
+      //Cool ship
+      switch (orientation) {
+        case "left":
+          body = toCoords(
+            [coords[0], coords[1] - length + 1].join(":"),
+            [coords[0], coords[1] - 1].join(":")
+          ); //Shouldnt exist if 2
+          //use body[0] and body[1] later (remidning myself)
+          break;
+        case "right":
+          body = toCoords(
+            [coords[0], coords[1] + 1].join(":"),
+            [coords[0], coords[1] + length - 1].join(":")
+          );
+          break;
+        case "up":
+          body = toCoords(
+            [coords[0] - length + 1, coords[1]].join(":"),
+            [coords[0] - 1, coords[1]].join(":")
+          );
+          break;
+        case "down":
+          body = toCoords(
+            [coords[0] + 1, coords[1]].join(":"),
+            [coords[0] + length - 1, coords[1]].join(":")
+          );
+          break;
+      }
+      renderBoat([tip], body, actualOrien[0], lv);
+    }
+  } else {
+    switch (orientation) {
+      case "left":
+        body = toCoords(
+          [coords[0], coords[1] - length + 1].join(":"),
+          [coords[0], coords[1] - 1].join(":")
+        ); //Shouldnt exist if 2
+        //use body[0] and body[1] later (remidning myself)
+        break;
+      case "right":
+        body = toCoords(
+          [coords[0], coords[1] + 1].join(":"),
+          [coords[0], coords[1] + length - 1].join(":")
+        );
+        break;
+      case "up":
+        body = toCoords(
+          [coords[0] - length + 1, coords[1]].join(":"),
+          [coords[0] - 1, coords[1]].join(":")
+        );
+        break;
+      case "down":
+        body = toCoords(
+          [coords[0] + 1, coords[1]].join(":"),
+          [coords[0] + length - 1, coords[1]].join(":")
+        );
+        break;
+    }
+    renderBoat([tip], body, actualOrien[0], lv);
+  }
+  switch (orientation) {
+    case "left":
+      oMap[coords[0]][coords[1]] = 2; //2 is tip, 1 is body, just for better visualisation
+      for (let i = 1; i < length; i++) {
+        oMap[coords[0]][coords[1] - i] = 1;
+      }
+      break;
+    case "right":
+      oMap[coords[0]][coords[1]] = 2; //2 is tip, 1 is body, just for better visualisation
+      for (let i = 1; i < length; i++) {
+        oMap[coords[0]][coords[1] + i] = 1;
+      }
+      break;
+    case "up":
+      oMap[coords[0]][coords[1]] = 2; //2 is tip, 1 is body, just for better visualisation
+      for (let i = 1; i < length; i++) {
+        oMap[coords[0] - i][coords[1]] = 1;
+      }
+      break;
+    case "down":
+      oMap[coords[0]][coords[1]] = 2; //2 is tip, 1 is body, just for better visualisation
+      for (let i = 1; i < length; i++) {
+        oMap[coords[0] + i][coords[1]] = 1;
+      }
+      break;
+  }
+}
+
+function renderBoat(tipp, bodyy = 0, orientation1, orientation2, rd = false) {
+  //pass in 0 for body
+  tip(tipp[0], orientation1);
+  if (tipp[1]) {
+    tip(
+      tipp[1],
+      orientation1 == "l"
+        ? "r"
+        : orientation1 == "r"
+        ? "l"
+        : orientation1 == "u"
+        ? "d"
+        : "u"
+    );
+  }
+  if (bodyy != 0) {
+    body(bodyy[0], bodyy[1], orientation2, rd);
+  }
+}
+
 drawLines(wire);
 
 drawLines(t.lines());
