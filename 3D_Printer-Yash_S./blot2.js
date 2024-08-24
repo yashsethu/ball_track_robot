@@ -7886,5 +7886,82 @@ if (img == 0) {
   bt.join(finalLines, img2Lines);
 }
 
+function parseCoords(coords, vertex) {
+  //Vertex is coords return value: tr, br, tl, bl (top-right, ... ,bottom-left, etc.)
+  let letter = coords.split(":")[0]; //Assumes it is fail proof
+  let number = coords.split(":")[1];
+  //defaults to top left first and then modifies
+  let x = gapx * number + 5;
+  let y = height - 15 - gapy * (alphabet.indexOf(letter) + 1);
+  switch (vertex) {
+    case "tr":
+      return [x + gapx, y];
+    case "tl":
+      return [x, y]; //default
+    case "br":
+      return [x + gapx, y - gapy];
+    case "bl":
+      return [x, y - gapy];
+  }
+}
+
+//This is the actual "art" part
+let tip = (coords, orientation) => {
+  //The tip of the ship, coords: letter: a1, f10 ,orientation: l, r, u ,d
+  const turtle = new bt.Turtle();
+  let x; //starting x position
+  let y; //starting y
+  //**pivot will be bl when up
+  let o =
+    orientation == "l"
+      ? "br"
+      : orientation == "r"
+      ? "tl"
+      : orientation == "u"
+      ? "bl"
+      : "tr";
+  let highest = [0, 0]; //idk maybe this is useful
+  [x, y] = parseCoords(coords, o);
+  turtle.jump([x, y]);
+  if (orientation == "l" || orientation == "r") {
+    let theta = Math.atan((8 * gapx) / (5 * gapy)) * (180 / Math.PI);
+    turtle.setAngle(orientation == "l" ? 180 : 0);
+    turtle.right(90 - theta);
+    turtle.forward(Math.sqrt(64 * gapx ** 2 + 25 * gapy ** 2) / 10);
+    highest = turtle.pos;
+    turtle.right(2 * theta);
+    turtle.forward(Math.sqrt(64 * gapx ** 2 + 25 * gapy ** 2) / 10);
+  } else {
+    let theta = Math.atan((8 * gapy) / (5 * gapx)) * (180 / Math.PI);
+    turtle.setAngle(orientation == "u" ? 90 : 270);
+    turtle.right(90 - theta);
+    turtle.forward(Math.sqrt(64 * gapy ** 2 + 25 * gapx ** 2) / 10);
+    highest = turtle.pos;
+    turtle.right(2 * theta);
+    turtle.forward(Math.sqrt(64 * gapy ** 2 + 25 * gapx ** 2) / 10);
+  }
+  drawLines(turtle.lines());
+};
+
+function drawLine(pointA, pointB) {
+  //Lazy function and also pointA and B are arrays like [number, number]
+  const turtle = new bt.Turtle();
+  turtle.jump(pointA);
+  turtle.goTo(pointB);
+  drawLines(turtle.lines());
+}
+
+const gapx = (width - 10) / (gridWidth + 1);
+const gapy = (height - 20) / (gridWidth + 1);
+
+let A = [5, height - 15];
+let B = [5, 5];
+//Draws columns
+for (let i = 0; i < gridWidth + 1; i++) {
+  drawLine(A, B);
+  A[0] += gapx;
+  B[0] += gapx;
+}
+
 drawLines(t.lines());
 drawLines(finalLines);
