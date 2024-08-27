@@ -10,4 +10,4 @@ To run on a Raspberry Pi:
 3. Run ```pip install -r requirements.txt```
 4. Enjoy!
 
-![Video of ball-tracking action](vid.mp4)
+[Video](https://drive.google.com/file/d/17D7AzfrFfIIbvZoVy9dQG3tsYv8z99LG/view?usp=sharing)
