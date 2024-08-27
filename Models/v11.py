@@ -9,6 +9,68 @@ import time
 IMAGE_SIZE = (200, 200)
 
 
+# Define the model architectures
+input_dim = 4
+output_dim = 2
+
+model = tf.keras.Sequential(
+    [
+        tf.keras.layers.Dense(128, activation="relu", input_shape=(input_dim,)),
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dense(64, activation="relu"),
+        tf.keras.layers.Dense(64, activation="relu"),
+        tf.keras.layers.Dense(32, activation="relu"),
+        tf.keras.layers.Dense(32, activation="relu"),
+        tf.keras.layers.Dense(16, activation="relu"),
+        tf.keras.layers.Dense(16, activation="relu"),
+        tf.keras.layers.Dense(output_dim, activation="softmax"),
+    ]
+)
+
+model2 = tf.keras.Sequential(
+    [
+        tf.keras.layers.Dense(256, activation="relu", input_shape=(input_dim,)),
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dense(64, activation="relu"),
+        tf.keras.layers.Dense(32, activation="relu"),
+        tf.keras.layers.Dense(16, activation="relu"),
+        tf.keras.layers.Dense(output_dim, activation="softmax"),
+    ]
+)
+
+model3 = tf.keras.Sequential(
+    [
+        tf.keras.layers.Dense(512, activation="relu", input_shape=(input_dim,)),
+        tf.keras.layers.Dense(256, activation="relu"),
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dense(64, activation="relu"),
+        tf.keras.layers.Dense(32, activation="relu"),
+        tf.keras.layers.Dense(16, activation="relu"),
+        tf.keras.layers.Dense(output_dim, activation="softmax"),
+    ]
+)
+
+model4 = tf.keras.Sequential(
+    [
+        tf.keras.layers.Dense(128, activation="relu", input_shape=(input_dim,)),
+        tf.keras.layers.Dense(64, activation="relu"),
+        tf.keras.layers.Dense(32, activation="relu"),
+        tf.keras.layers.Dense(16, activation="relu"),
+        tf.keras.layers.Dense(output_dim, activation="softmax"),
+    ]
+)
+
+# Define the reinforcement learning environment
+env = gym.make("CartPole-v1")
+
+# Define the optimizer and loss function
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+loss_fn = tf.keras.losses.CategoricalCrossentropy()
+
+# Define the training loop
+num_episodes = 100
+
+
 def generate_data_from_webcam(num_samples):
     if not os.path.exists("datasets"):
         os.makedirs("datasets")
@@ -88,6 +150,31 @@ interpreter = interpreter_wrapper.Interpreter(model_path="model.tflite")
 interpreter.allocate_tensors()
 
 cap = cv2.VideoCapture(0)
+
+# Compile the models
+lay_1.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+lay_2.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+lay_3.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+lay_4.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+
+# Train the models
+lay_1.fit(x_train, y_train, epochs=10, batch_size=32)
+lay_2.fit(x_train, y_train, epochs=10, batch_size=32)
+lay_3.fit(x_train, y_train, epochs=10, batch_size=32)
+lay_4.fit(x_train, y_train, epochs=10, batch_size=32)
+
+# Save the trained models
+lay_1.save("path_to_lay_1_model")
+lay_2.save("path_to_lay_2_model")
+lay_3.save("path_to_lay_3_model")
+lay_4.save("path_to_lay_4_model")
+
+# Load the trained models
+model_1 = tf.keras.models.load_model("path_to_lay_1_model")
+model_2 = tf.keras.models.load_model("path_to_lay_2_model")
+model_3 = tf.keras.models.load_model("path_to_lay_3_model")
+model_4 = tf.keras.models.load_model("path_to_lay_4_model")
+
 
 while True:
     ret, frame = cap.read()
