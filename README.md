@@ -9,3 +9,5 @@ To run on a Raspberry Pi:
 2. Make a Virtual Environment in Python: ```python -m venv --system-site-packages env && source env/bin/activate```
 3. Run ```pip install -r requirements.txt```
 4. Enjoy!
+
+![Video of ball-tracking action](vid.mp4)
